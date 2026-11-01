@@ -1,0 +1,37 @@
+{
+    "onset": {
+        "Description": "Event onset in seconds, relative to first logged event.",
+        "Units": "s"
+    },
+    "duration": {
+        "Description": "Event duration.",
+        "Units": "s"
+    },
+    "trial_type": {
+        "Description": "Phase type (rest_open, rest_closed, cue, prep, move, return)."
+    },
+    "arm": {
+        "Description": "Which arm was used (Left, Right, or None)."
+    },
+    "base_code": {
+        "Description": "Baseline position 1-6. orientation = ((code-1) % 3) + 1 (1: up, 2: side, 3: down); hand state = open if code <= 3, closed if code >= 4."
+    },
+    "move_code": {
+        "Description": "Canonical movement code, independent of baseline position."
+    },
+    "movement_key": {
+        "Description": "Key from MOVEMENTS dict describing the movement."
+    },
+    "block": {
+        "Description": "Block index (1-based)."
+    },
+    "rep": {
+        "Description": "Repetition index within a block (0 for cue, 1..N for trials)."
+    },
+    "lsl_marker": {
+        "Description": "Integer marker sent over LSL encoding phase, arm, base, movement."
+    },
+    "arduino_trigger": {
+        "Description": "Integer trigger code sent to Arduino (move*10 + phase)."
+    }
+}

@@ -1,0 +1,11 @@
+phase,lsl_t_start,lsl_t_end,duration_s,lsl_marker,arduino_trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+rest_open,8233400.062000166,8233401.070601,1.0086008347570896,9701,,sub-001,0,1,,,,,,2026.2.4,1024.0,1024.0
+rest_closed,8233401.074178416,8233402.08733025,1.0131518337875605,9702,,sub-001,0,1,,,,,,2026.2.4,1024.0,1024.0
+cue,8233409.137683583,8233412.733048541,3.5953649571165442,11229,,sub-001,1,0,Left,2,29,2_side_wrist_dorsiflexion_normalforce_3sec,2_side_wrist_dorsiflexion_normalforce_3sec.mp4,2026.2.4,1024.0,1024.0
+prep,8233414.237311208,8233417.287468875,3.0501576671376824,31229,,sub-001,1,1,Left,2,29,2_side_wrist_dorsiflexion_normalforce_3sec,2_side_wrist_dorsiflexion_normalforce_3sec.mp4,2026.2.4,1024.0,1024.0
+move,8233417.287478666,8233421.85080875,4.5633300840854645,51229,,sub-001,1,1,Left,2,29,2_side_wrist_dorsiflexion_normalforce_3sec,2_side_wrist_dorsiflexion_normalforce_3sec.mp4,2026.2.4,1024.0,1024.0
+return,8233421.850814458,8233423.85409475,2.003280292265117,71229,,sub-001,1,1,Left,2,29,2_side_wrist_dorsiflexion_normalforce_3sec,2_side_wrist_dorsiflexion_normalforce_3sec.mp4,2026.2.4,1024.0,1024.0
+cue,8233437.937929416,8233441.2001635,3.2622340843081474,11203,,sub-001,2,0,Left,2,3,2_side_close_middle_3sec,2_side_close_middle_3sec.mp4,2026.2.4,1024.0,1024.0
+prep,8233442.70442325,8233445.754636708,3.050213458016515,31203,,sub-001,2,1,Left,2,3,2_side_close_middle_3sec,2_side_close_middle_3sec.mp4,2026.2.4,1024.0,1024.0
+move,8233445.754646708,8233450.178912541,4.424265832640231,51203,,sub-001,2,1,Left,2,3,2_side_close_middle_3sec,2_side_close_middle_3sec.mp4,2026.2.4,1024.0,1024.0
+return,8233450.178919333,8233452.187973416,2.009054083377123,71203,,sub-001,2,1,Left,2,3,2_side_close_middle_3sec,2_side_close_middle_3sec.mp4,2026.2.4,1024.0,1024.0

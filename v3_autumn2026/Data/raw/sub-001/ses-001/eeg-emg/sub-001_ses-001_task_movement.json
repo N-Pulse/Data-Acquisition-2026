@@ -1,0 +1,14 @@
+{
+    "TaskName": "movement",
+    "Manufacturer": "Unknown",
+    "EEGReference": "n/a",
+    "SamplingFrequency": 1024.0,
+    "PowerLineFrequency": 50,
+    "SoftwareFilters": "See acquisition system configuration.",
+    "RecordingType": "continuous",
+    "RecordingDuration": 55.49238145817071,
+    "MovementsVersion": "fall2026",
+    "TriggerChannelCount": 1,
+    "HardwareTriggers": "Arduino via Trigger class; codes stored in arduino_trigger column of events.tsv.",
+    "LSLMarkers": "stimulus_stream, integer channel named 'Markers'."
+}

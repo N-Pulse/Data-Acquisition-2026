@@ -1,0 +1,15 @@
+phase,lsl_t_start,lsl_t_end,duration_s,trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+cue,616496.3618073,616500.3986971,4.036889799986966,11203,sub-001,1,1,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+prep,616501.9015073,616504.9259162,3.0244089000625536,21203,sub-001,1,1,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+move,616504.9259648,616510.601997,5.67603220010642,31203,sub-001,1,1,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+return,616510.6020367,616512.6071317,2.0050950000295416,41203,sub-001,1,1,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+prep,616517.1152738,616520.1285118,3.0132379999849945,21203,sub-001,1,2,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+move,616520.1285406,616525.7910975,5.662556900060736,31203,sub-001,1,2,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+return,616525.7911248,616527.7926634,2.001538599957712,41203,sub-001,1,2,Left,2,3,2_side_closetofist_allfingerstogether_maxforce_3sec,2_side_closetofist_allfingerstogether_maxforce_3sec.mov,2024.2.5,1000.0,2000.0
+cue,616537.8076164,616541.5918697,3.784253300051205,11206,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+prep,616543.0944989,616546.1119794,3.0174805000424385,21206,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+move,616546.112018,616551.4105807,5.298562700045295,31206,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+return,616551.4106161,616553.4144394,2.003823300008662,41206,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+prep,616557.9236007,616560.9420683,3.018467599991709,21206,sub-001,2,2,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+move,616560.942118,616566.1033601,5.161242099944502,31206,sub-001,2,2,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+return,616566.1034074,616568.1079341,2.004526700009592,41206,sub-001,2,2,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0

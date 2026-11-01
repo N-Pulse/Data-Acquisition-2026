@@ -1,0 +1,5 @@
+phase,lsl_t_start,lsl_t_end,duration_s,lsl_marker,arduino_trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+cue,780054.0633854,780058.22151,4.158124599955045,12201,11,test trigger,1,0,Right,2,1,2_side_openhand_slow_3sec,2_side_openhand_slow_3sec.mov,2024.2.5,1000.0,2000.0
+prep,780059.7270034,780062.9192217,3.192218300071545,22201,12,test trigger,1,1,Right,2,1,2_side_openhand_slow_3sec,2_side_openhand_slow_3sec.mov,2024.2.5,1000.0,2000.0
+move,780062.9192487,780068.027267,5.1080183000303805,32201,13,test trigger,1,1,Right,2,1,2_side_openhand_slow_3sec,2_side_openhand_slow_3sec.mov,2024.2.5,1000.0,2000.0
+return,780068.0273078,780070.044782,2.017474199994467,42201,14,test trigger,1,1,Right,2,1,2_side_openhand_slow_3sec,2_side_openhand_slow_3sec.mov,2024.2.5,1000.0,2000.0

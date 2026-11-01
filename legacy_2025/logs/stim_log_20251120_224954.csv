@@ -1,0 +1,17 @@
+phase,lsl_t_start,lsl_t_end,duration_s,lsl_marker,arduino_trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+rest_open,722038.6608511,722040.6688779,2.0080268000019714,9701,,sub-001,0,1,,,,,,2024.2.5,1000.0,2000.0
+rest_closed,722040.6801602,722042.6843849,2.0042247000383213,9702,,sub-001,0,1,,,,,,2024.2.5,1000.0,2000.0
+cue,722049.7197439,722054.289785,4.570041100028902,11207,,sub-001,1,0,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+prep,722055.7947,722058.8214022,3.026702200062573,21207,,sub-001,1,1,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+move,722058.8214523,722063.9508391,5.1293868001084775,31207,,sub-001,1,1,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+return,722063.9508846,722065.9564695,2.0055848999181762,41207,,sub-001,1,1,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+prep,722069.4615023,722072.4788702,3.017367899999954,21207,,sub-001,1,2,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+move,722072.4789194,722077.6069132,5.127993799978867,31207,,sub-001,1,2,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+return,722077.6069564,722079.6089511,2.001994700054638,41207,,sub-001,1,2,Left,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+cue,722093.6444614,722097.5111547,3.8666932999622077,11206,,sub-001,2,0,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+prep,722099.0136908,722102.0323584,3.0186676000012085,21206,,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+move,722102.0324024,722107.1523927,5.119990299921483,31206,,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+return,722107.1524386,722109.1555514,2.0031128000700846,41206,,sub-001,2,1,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+prep,722112.6599638,722115.6764134,3.016449599992484,21206,,sub-001,2,2,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+move,722115.6764618,722120.7965344,5.120072599966079,31206,,sub-001,2,2,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0
+return,722120.7965846,722122.8001613,2.003576699993573,41206,,sub-001,2,2,Left,2,6,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mov,2024.2.5,1000.0,2000.0

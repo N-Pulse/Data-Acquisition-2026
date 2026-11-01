@@ -1,0 +1,458 @@
+{
+    "1_up_openhand_slow_3sec": {
+        "code": 27,
+        "file": "1_up_openhand_slow_3sec.mov",
+        "label": "Open hand slow 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_openhand_fast_1sec": {
+        "code": 26,
+        "file": "1_up_openhand_fast_1sec.mov",
+        "label": "Open hand fast 1 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_closetofist_allfingerstogether_slow_3sec": {
+        "code": 13,
+        "file": "1_up_closetofist_allfingerstogether_slow_3sec.mov",
+        "label": "Close to fist allfingerstogether slow 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_closetofist_allfingerstogether_fast_1sec": {
+        "code": 10,
+        "file": "1_up_closetofist_allfingerstogether_fast_1sec.mov",
+        "label": "Close to fist allfingerstogether fast 1 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_closetofist_allfingerstogether_3sec_normalforce": {
+        "code": 12,
+        "file": "1_up_closetofist_allfingerstogether_3sec_normalforce.mov",
+        "label": "Close to fist allfingerstogether 3 sec normal force (up)",
+        "baseline_code": 1
+    },
+    "1_up_closetofist_allfingerstogether_3sec_maxforce": {
+        "code": 11,
+        "file": "1_up_closetofist_allfingerstogether_3sec_maxforce.mov",
+        "label": "Close to fist allfingerstogether 3 sec max force (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_fourfingers_together_3sec": {
+        "code": 1,
+        "file": "1_up_close_fourfingers_together_3sec.mov",
+        "label": "Close four fingers together 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_fourfingers_together_3sec": {
+        "code": 18,
+        "file": "1_up_open_fourfingers_together_3sec.mov",
+        "label": "Open four fingers together 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_onlythumb_3sec": {
+        "code": 4,
+        "file": "1_up_close_onlythumb_3sec.mov",
+        "label": "Close only thumb 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_onlythumb_3sec": {
+        "code": 21,
+        "file": "1_up_open_onlythumb_3sec.mov",
+        "label": "Open only thumb 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_wrist_palmarflexion_normalforce_3sec": {
+        "code": 31,
+        "file": "1_up_wrist_palmarflexion_normalforce_3sec.mov",
+        "label": "Wrist palmarflexion normal force 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_wrist_palmarflexion_maxforce_3sec": {
+        "code": 30,
+        "file": "1_up_wrist_palmarflexion_maxforce_3sec.mov",
+        "label": "Wrist palmarflexion max force 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_wrist_dorsiflexion_normalforce_3sec": {
+        "code": 29,
+        "file": "1_up_wrist_dorsiflexion_normalforce_3sec.mov",
+        "label": "Wrist dorsiflexion normal force 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_wrist_dorsiflexion_maxforce_3sec": {
+        "code": 28,
+        "file": "1_up_wrist_dorsiflexion_maxforce_3sec.mov",
+        "label": "Wrist dorsiflexion max force 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_grasp_donut_3sec": {
+        "code": 15,
+        "file": "1_up_grasp_donut_3sec.mov",
+        "label": "Grasp donut 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_pinky_3sec": {
+        "code": 5,
+        "file": "1_up_close_pinky_3sec.mov",
+        "label": "Close pinky 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_ring_3sec": {
+        "code": 6,
+        "file": "1_up_close_ring_3sec.mov",
+        "label": "Close ring 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_middle_3sec": {
+        "code": 3,
+        "file": "1_up_close_middle_3sec.mov",
+        "label": "Close middle 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_index_3sec": {
+        "code": 2,
+        "file": "1_up_close_index_3sec.mov",
+        "label": "Close index 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_close_thumb_3sec": {
+        "code": 7,
+        "file": "1_up_close_thumb_3sec.mov",
+        "label": "Close thumb 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_pinky_3sec": {
+        "code": 23,
+        "file": "1_up_open_pinky_3sec.mov",
+        "label": "Open pinky 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_ring_3sec": {
+        "code": 24,
+        "file": "1_up_open_ring_3sec.mov",
+        "label": "Open ring 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_middle_3sec": {
+        "code": 20,
+        "file": "1_up_open_middle_3sec.mov",
+        "label": "Open middle 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_index_3sec": {
+        "code": 19,
+        "file": "1_up_open_index_3sec.mov",
+        "label": "Open index 3 sec (up)",
+        "baseline_code": 1
+    },
+    "1_up_open_thumb_3sec": {
+        "code": 25,
+        "file": "1_up_open_thumb_3sec.mov",
+        "label": "Open thumb 3 sec (up)",
+        "baseline_code": 1
+    },
+    "2_side_openhand_slow_3sec": {
+        "code": 27,
+        "file": "2_side_openhand_slow_3sec.mov",
+        "label": "Open hand slow 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_openhand_fast_1sec": {
+        "code": 26,
+        "file": "2_side_openhand_fast_1sec.mov",
+        "label": "Open hand fast 1 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_closetofist_allfingerstogether_slow_3sec": {
+        "code": 13,
+        "file": "2_side_closetofist_allfingerstogether_slow_3sec.mov",
+        "label": "Close to fist allfingerstogether slow 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_closetofist_allfingerstogether_fast_1sec": {
+        "code": 10,
+        "file": "2_side_closetofist_allfingerstogether_fast_1sec.mov",
+        "label": "Close to fist allfingerstogether fast 1 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_closetofist_allfingerstogether_normalforce_3sec": {
+        "code": 12,
+        "file": "2_side_closetofist_allfingerstogether_normalforce_3sec.mov",
+        "label": "Close to fist allfingerstogether normal force 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_closetofist_allfingerstogether_maxforce_3sec": {
+        "code": 11,
+        "file": "2_side_closetofist_allfingerstogether_maxforce_3sec.mov",
+        "label": "Close to fist allfingerstogether max force 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_fourfingers_together_3sec": {
+        "code": 18,
+        "file": "2_side_open_fourfingers_together_3sec.mov",
+        "label": "Open four fingers together 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_fourfingers_together_3sec": {
+        "code": 1,
+        "file": "2_side_close_fourfingers_together_3sec.mov",
+        "label": "Close four fingers together 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_onlythumb_3sec": {
+        "code": 21,
+        "file": "2_side_open_onlythumb_3sec.mov",
+        "label": "Open only thumb 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_onlythumb_3sec": {
+        "code": 4,
+        "file": "2_side_close_onlythumb_3sec.mov",
+        "label": "Close only thumb 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_wrist_palmarflexion_normalforce_3sec": {
+        "code": 31,
+        "file": "2_side_wrist_palmarflexion_normalforce_3sec.mov",
+        "label": "Wrist palmarflexion normal force 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_wrist_palmarflexion_maxforce_3sec": {
+        "code": 30,
+        "file": "2_side_wrist_palmarflexion_maxforce_3sec.mov",
+        "label": "Wrist palmarflexion max force 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_wrist_dorsiflexion_maxforce_3sec": {
+        "code": 28,
+        "file": "2_side_wrist_dorsiflexion_maxforce_3sec.mov",
+        "label": "Wrist dorsiflexion max force 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_wrist_dorsiflexion_normalforce_3sec": {
+        "code": 29,
+        "file": "2_side_wrist_dorsiflexion_normalforce_3sec.mov",
+        "label": "Wrist dorsiflexion normal force 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_grasp_cup_3sec": {
+        "code": 14,
+        "file": "2_side_grasp_cup_3sec.mov",
+        "label": "Grasp cup 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_pinky_3sec": {
+        "code": 5,
+        "file": "2_side_close_pinky_3sec.mov",
+        "label": "Close pinky 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_ring_3sec": {
+        "code": 6,
+        "file": "2_side_close_ring_3sec.mov",
+        "label": "Close ring 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_middle_3sec": {
+        "code": 3,
+        "file": "2_side_close_middle_3sec.mov",
+        "label": "Close middle 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_index_3sec": {
+        "code": 2,
+        "file": "2_side_close_index_3sec.mov",
+        "label": "Close index 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_close_thumb_3sec": {
+        "code": 7,
+        "file": "2_side_close_thumb_3sec.mov",
+        "label": "Close thumb 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_pinky_3sex": {
+        "code": 23,
+        "file": "2_side_open_pinky_3sex.mov",
+        "label": "Open pinky 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_ring_3sec": {
+        "code": 24,
+        "file": "2_side_open_ring_3sec.mov",
+        "label": "Open ring 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_middle_3sec": {
+        "code": 20,
+        "file": "2_side_open_middle_3sec.mov",
+        "label": "Open middle 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_index_3sec": {
+        "code": 19,
+        "file": "2_side_open_index_3sec.mov",
+        "label": "Open index 3 sec (side)",
+        "baseline_code": 2
+    },
+    "2_side_open_thumb_3sec": {
+        "code": 25,
+        "file": "2_side_open_thumb_3sec.mov",
+        "label": "Open thumb 3 sec (side)",
+        "baseline_code": 2
+    },
+    "3_down_openhand_slow_3sec": {
+        "code": 27,
+        "file": "3_down_openhand_slow_3sec.mov",
+        "label": "Open hand slow 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_openhand_fast_1sec": {
+        "code": 26,
+        "file": "3_down_openhand_fast_1sec.mov",
+        "label": "Open hand fast 1 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_closetofist_allfingerstogether_slow_3sec": {
+        "code": 13,
+        "file": "3_down_closetofist_allfingerstogether_slow_3sec.mov",
+        "label": "Close to fist allfingerstogether slow 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_closetofist_allfingerstogether_fast_1sec": {
+        "code": 10,
+        "file": "3_down_closetofist_allfingerstogether_fast_1sec.mov",
+        "label": "Close to fist allfingerstogether fast 1 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_closetofist_allfingerstogether_normalforce_3sec": {
+        "code": 12,
+        "file": "3_down_closetofist_allfingerstogether_normalforce_3sec.mov",
+        "label": "Close to fist allfingerstogether normal force 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_closetofist_allfingerstogether_maxforce_3sec": {
+        "code": 11,
+        "file": "3_down_closetofist_allfingerstogether_maxforce_3sec.mov",
+        "label": "Close to fist allfingerstogether max force 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_fourfingers_together_3sec": {
+        "code": 18,
+        "file": "3_down_open_fourfingers_together_3sec.mov",
+        "label": "Open four fingers together 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_fourfingers_together_3sec": {
+        "code": 1,
+        "file": "3_down_close_fourfingers_together_3sec.mov",
+        "label": "Close four fingers together 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_onlythumb_3sec": {
+        "code": 21,
+        "file": "3_down_open_onlythumb_3sec.mov",
+        "label": "Open only thumb 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_onlythumb_3sec": {
+        "code": 4,
+        "file": "3_down_close_onlythumb_3sec.mov",
+        "label": "Close only thumb 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_wrist_palmarflexion_normalforce_3sec": {
+        "code": 31,
+        "file": "3_down_wrist_palmarflexion_normalforce_3sec.mov",
+        "label": "Wrist palmarflexion normal force 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_wrist_palmarflexion_maxforce_3sec": {
+        "code": 30,
+        "file": "3_down_wrist_palmarflexion_maxforce_3sec.mov",
+        "label": "Wrist palmarflexion max force 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_wrist_dorsiflexion_normalforce_3sec": {
+        "code": 29,
+        "file": "3_down_wrist_dorsiflexion_normalforce_3sec.mov",
+        "label": "Wrist dorsiflexion normal force 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_wrist_dorsiflexion_maxforce_3sec": {
+        "code": 28,
+        "file": "3_down_wrist_dorsiflexion_maxforce_3sec.mov",
+        "label": "Wrist dorsiflexion max force 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_grasping_pinching_pen_allfingers_3sec": {
+        "code": 17,
+        "file": "3_down_grasping_pinching_pen_allfingers_3sec.mov",
+        "label": "Grasping pinching pen allfingers 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_grasping_pinching_pen_2fingers_3sec": {
+        "code": 16,
+        "file": "3_down_grasping_pinching_pen_2fingers_3sec.mov",
+        "label": "Grasping pinching pen 2fingers 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_pinky_3sec": {
+        "code": 5,
+        "file": "3_down_close_pinky_3sec.mov",
+        "label": "Close pinky 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_ring_3sec": {
+        "code": 6,
+        "file": "3_down_close_ring_3sec.mov",
+        "label": "Close ring 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_middle_3sec": {
+        "code": 3,
+        "file": "3_down_close_middle_3sec.mov",
+        "label": "Close middle 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_index_3sec": {
+        "code": 2,
+        "file": "3_down_close_index_3sec.mov",
+        "label": "Close index 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_close_thumb_3sec": {
+        "code": 7,
+        "file": "3_down_close_thumb_3sec.mov",
+        "label": "Close thumb 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_pinky_3sex": {
+        "code": 23,
+        "file": "3_down_open_pinky_3sex.mov",
+        "label": "Open pinky 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_ring_3sec": {
+        "code": 24,
+        "file": "3_down_open_ring_3sec.mov",
+        "label": "Open ring 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_middle_3sec": {
+        "code": 20,
+        "file": "3_down_open_middle_3sec.mov",
+        "label": "Open middle 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_index_3sec": {
+        "code": 19,
+        "file": "3_down_open_index_3sec.mov",
+        "label": "Open index 3 sec (down)",
+        "baseline_code": 3
+    },
+    "3_down_open_thumb_3sec": {
+        "code": 25,
+        "file": "3_down_open_thumb_3sec.mov",
+        "label": "Open thumb 3 sec (down)",
+        "baseline_code": 3
+    }
+}

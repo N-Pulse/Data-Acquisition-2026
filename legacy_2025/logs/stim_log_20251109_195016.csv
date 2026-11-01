@@ -1,0 +1,9 @@
+phase,lsl_t_start,lsl_t_end,duration_s,arm,base_code,move_code,movement_key,file,rep,block
+cue,3462112.8726938,3462116.9534198,4.0807260000146925,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,1,1
+move,3462119.9906663,3462125.3342252,5.3435589000582695,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,1,1
+cue,3462130.3452092,3462134.3905677,4.045358499977738,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2,1
+move,3462137.4136665,3462142.7767781,5.363111600279808,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2,1
+cue,3462152.8002784,3462156.6937152,3.8934367997571826,Left,2,2,2_side_close_index_3sec,2_side_close_index_3sec.mov,1,2
+move,3462159.7170011,3462165.482367,5.765365900006145,Left,2,2,2_side_close_index_3sec,2_side_close_index_3sec.mov,1,2
+cue,3462170.4926224,3462174.3488572,3.856234799604863,Left,2,2,2_side_close_index_3sec,2_side_close_index_3sec.mov,2,2
+move,3462177.3703899,3462183.0790447,5.708654799964279,Left,2,2,2_side_close_index_3sec,2_side_close_index_3sec.mov,2,2

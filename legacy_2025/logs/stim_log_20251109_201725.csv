@@ -1,0 +1,13 @@
+phase,lsl_t_start,lsl_t_end,duration_s,trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+cue,3463765.9885953,3463769.8868446,3.898249300196767,1121,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+prep,3463769.8868838,3463772.9152597,3.02837589988485,2121,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+move,3463772.9153076,3463778.2569095,5.3416018998250365,3121,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+return,3463778.2569521,3463780.2626529,2.005700800102204,4121,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+cue,3463783.2701588,3463787.1196838,3.8495249999687076,1121,sub-001,1,2,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+prep,3463787.1197093,3463790.1380613,3.018352000042796,2121,sub-001,1,2,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+move,3463790.1381121,3463795.4750099,5.336897800210863,3121,sub-001,1,2,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+return,3463795.4750436,3463797.4770903,2.0020467001013458,4121,sub-001,1,2,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+cue,3463800.4831259,3463804.4995596,4.016433699987829,1121,sub-001,1,3,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+prep,3463804.4996,3463807.5197029,3.0201028999872506,2121,sub-001,1,3,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+move,3463807.5197503,3463812.8540549,5.334304600022733,3121,sub-001,1,3,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+return,3463812.8541004,3463814.8582413,2.0041408999823034,4121,sub-001,1,3,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0

@@ -1,0 +1,5 @@
+{
+    "EEGCoordinateSystem": "unknown",
+    "EEGCoordinateUnits": "mm",
+    "EEGCoordinateSystemDescription": "Coordinate system not specified. Update with your system (e.g., 'Cap layout in subject space')."
+}

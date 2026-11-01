@@ -1,0 +1,5 @@
+phase,lsl_t_start,lsl_t_end,duration_s,trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+cue,3691918.1392029,3691922.0831143,3.943911399692297,11201,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+prep,3691922.0831466,3691925.1069215,3.023774900007993,21201,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+move,3691925.1069664,3691930.4055522,5.298585799988359,31201,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0
+return,3691930.4055844,3691932.4093013,2.003716900013387,41201,sub-001,1,1,Left,2,1,2_side_close_fourfingers_together_3sec,2_side_close_fourfingers_together_3sec.mov,2024.2.5,1000.0,2000.0

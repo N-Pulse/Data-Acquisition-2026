@@ -1,0 +1,5 @@
+phase,lsl_t_start,lsl_t_end,duration_s,lsl_marker,arduino_trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+cue,156247.070661,156251.1663505,4.095689499983564,12207,,sub-007,1,0,Right,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,1000.0
+prep,156252.6711455,156255.6987105,3.0275649999966845,32207,,sub-007,1,1,Right,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,1000.0
+move,156255.6987557,156260.8300593,5.131303600006504,52207,,sub-007,1,1,Right,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,1000.0
+return,156260.8300975,156262.8466007,2.016503199993167,52207,,sub-007,1,1,Right,2,7,2_side_open_onlythumb_3sec,2_side_open_onlythumb_3sec.mov,2024.2.5,1000.0,1000.0
