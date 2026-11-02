@@ -71,14 +71,12 @@ def make_marker(phase_code: int, arm_code: int, base_code: int, move_code: int) 
 # Arduino trigger encoding: movement, phase
 def make_trigger(phase_code: int, move_code: int) -> int:
     """
-    Arduino trigger code:
-      trigger = move*10 + phase
-
+    To check later, not sure  
     So:
       - units digit = phase (1–5)
       - higher digits = move code
     """
-    return move_code * 10 + phase_code
+    return phase_code
 
 
 def push_event_codes(outlet, arm: str, phase: str, base_code: int, move_code: int, trigger_dev=None):
