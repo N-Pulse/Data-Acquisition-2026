@@ -79,7 +79,7 @@ pip install psychopy pylsl pyserial pyxdf numpy scipy
 > - `session_label` (hard-coded `"ses-001"`) — change it for a new session.
 > - **Arduino trigger**: in the repository version the trigger is **disabled** (`trigger = None`).
 >   To send hardware triggers, uncomment `from visual_task_simple import Trigger` and
->   `trigger = Trigger(source="arduino", port="COM6")` (COM6 or COM10 depending on the computer).
+>   `trigger = Trigger(source="arduino", port="COM6")` (the name of the port depends on the computer used).
 > - In LabRecorder, change *Participant* / *Session* before **Start**, otherwise a file can be overwritten.
 
 ---
@@ -184,5 +184,4 @@ Example of an events file: [`Data/raw/sub-001/ses-001/eeg-emg/`](Data/raw/sub-00
 - **"Perform dur"** in the timing dialog is not used: the MOVE phase always lasts the full video.
 - **Log saving** happens at the end of the run only; if the script crashes, the CSV is lost (the LSL markers remain in the `.xdf`).
 - Hardware issues found by the QC (dead channel 24, gel bridges, …): see `README_QC.md`.
-- Data organisation across campaigns (`data/2025-fall`, `data/2026-autumn`, harmonised subject IDs) still has to be done by hand.
 - Link to the dataset / videos: *to add* (access to the N-Pulse Drive required).
