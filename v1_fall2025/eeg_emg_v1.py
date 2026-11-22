@@ -8,7 +8,7 @@ from pylsl import StreamInfo, StreamOutlet, local_clock
 import os, random, re, gc
 from collections import OrderedDict
 import csv, time
-from visual_task_simple import Trigger
+from v3_autumn2026.visual_task_simple import Trigger
 
 
 trigger = Trigger(source="arduino", port="COM6")
