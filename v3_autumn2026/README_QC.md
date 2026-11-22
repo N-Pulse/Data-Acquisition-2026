@@ -54,6 +54,7 @@ grep -H -E "^   (WARN|FAIL)" ~/Downloads/*_qc.txt   # only the problems, with th
 - Next to the `.xdf`, in the folder `<file>_QC/`:
   - `qc_summary.txt`: everything printed on screen;
   - `qc_channels.csv`: one line per channel (status, reasons, offset, 50 Hz noise...).
+    Channels from the known-broken list start their reasons with `known broken (KNOWN_BAD)`.
 
 ---
 
@@ -66,17 +67,19 @@ grep -H -E "^   (WARN|FAIL)" ~/Downloads/*_qc.txt   # only the problems, with th
   - 🟠 **ORANGE**: usable with caution (read the reasons).
   - 🔴 **RED**: redo the session or fix the setup.
 
-## The 7 tests
+## The 9 tests
 
 | # | Test | What it checks | Typical problem detected |
 |---|---|---|---|
 | 1 | File complete | Cap recognised (64 or 128), actual sampling rate, no gaps, sufficient duration, file not corrupted | unstable USB cable, LabRecorder stopped too early, download not finished |
-| 2 | Events (triggers) | Triggers present, complete trials (prep → move → return), regular durations | Arduino not connected, `trigger = None` left in the code, wrong COM port, lost triggers |
-| 3 | Inactive channels | EEG: flat, saturated or disconnected channels. EMG: which inputs carry a signal | dead EEG electrode, EMG box not connected |
-| 4 | EEG: ground / reference | All channels noisy at the same time | ground (GND) or reference badly placed, amplifier charging |
-| 5 | EEG: noise per channel | 50 Hz, high-frequency noise, isolated channels, gel bridges | badly gelled electrode, too much gel between electrodes |
-| 6 | EMG: noise | Plausible muscle signal, 50 Hz, two identical channels | bad contact, electrodes touching each other |
-| 7 | Stability | Does quality drop between the start and the end of the session? | gel drying, electrode coming off |
+| 2 | Channel names (metadata) | Every channel has a name in the `.xdf` header: `channel_count` = number of names = number of data columns, no empty or duplicated name | names written for the first amplifier only → unnamed channels hidden in the visualisation / decoding |
+| 3 | Events (triggers) | Triggers present, complete trials (prep → move → return), regular durations | Arduino not connected, `trigger = None` left in the code, wrong COM port, lost triggers |
+| 4 | Markers / TRIGGER channel | The `TRIGGER` label is on the channel that really holds the trigger (last column); trigger codes are known ones; sync pulses (128) present; `stimulus_stream` LSL markers recorded, not empty, inside the EEG recording and consistent with the TRIGGER channel | label on the wrong channel (no markers in the visualisation), other script / Arduino version, `stimulus_stream` not ticked in LabRecorder |
+| 5 | Inactive channels | EEG: flat, saturated or disconnected channels. EMG: which inputs carry a signal | dead EEG electrode, EMG box not connected |
+| 6 | EEG: ground / reference | All channels noisy at the same time | ground (GND) or reference badly placed, amplifier charging |
+| 7 | EEG: noise per channel | 50 Hz, high-frequency noise, isolated channels, gel bridges | badly gelled electrode, too much gel between electrodes |
+| 8 | EMG: noise | Plausible muscle signal, 50 Hz, two identical channels | bad contact, electrodes touching each other |
+| 9 | Stability | Does quality drop between the start and the end of the session? | gel drying, electrode coming off |
 
 ## Good to know
 
@@ -95,19 +98,58 @@ grep -H -E "^   (WARN|FAIL)" ~/Downloads/*_qc.txt   # only the problems, with th
 
   If the Arduino is disabled, the script can use the `stimulus_stream` markers instead
   (tick `stimulus_stream` in LabRecorder after launching `eeg_emg_v3.py` and clicking *Update*).
+  Trigger codes are read as `10 × movement + phase` (e.g. `15` = movement 1, *move*); older sessions
+  that only send the phase (`1, 3, 5, 7, 9`) are read the same way. A missing `stimulus_stream` is only
+  INFO by default; set `MARKER_STREAM_REQUIRED = True` (top of the script) to make it a WARN.
+- **Known broken channels (`KNOWN_BAD`)**: list at the top of the script, per amplifier (key = exact LSL
+  stream name, e.g. `eegoSports 0000`, channel numbers as printed by the QC). These channels are still
+  tested, but shown as *known, to repair* and no longer turn the verdict orange / red. `bridges` lists
+  groups of electrodes known to be shorted together: a bridge inside one group is ignored, any other bridge
+  is still reported. When a known channel looks fine again, the QC says so → remove it from the list once
+  the electrode is repaired. The current list (Nov 2026) is based on 14 sessions and still has to be
+  confirmed by the hardware team, especially for the 64-electrode amplifiers (one participant each).
 - **Thresholds**: at the top of the script (`CONFIGURATION` section). They are starting values, tested on
-  simulated sessions and on real ones (P012, P0013, P015, P017).
+  simulated sessions and on real ones (P012, P0013, P014, P015, P016, P017).
 
 ---
 
 ## Known problems to fix (found by the QC, Sept–Nov 2026)
 
-### Hardware to check (128-electrode cap)
+### Acquisition / software (to fix first)
 
-- **EEG channel 24 is dead** in every 128-cap session (P012, P015, P017).
+- **Channel names on the 128 setup**: only 65 names for 177 channels (`Ch1`–`Ch64` + `TRIGGER`, i.e. the first
+  amplifier only), and the `TRIGGER` label sits on channel 65 while the trigger data is in channel 177.
+  The data is complete, but the visualisation hides channels 66–177 and a tool that looks up the trigger by
+  name reads an EEG channel. The 64 setup is correct (73 names, `TRIGGER` on the last channel).
+  → Fix the channel names written by the acquisition (eego / LSL configuration or script). Tests 2 and 4.
+- **No `stimulus_stream` in any of the 14 files checked**: the events are only in the TRIGGER channel.
+  → Tick `stimulus_stream` in LabRecorder before **Start**.
+- **No sync pulses (128) on the 64 setup (Biotech, amplifiers 000650 / 000697)**, present on the 128 setup.
+  → Use the same version of `eeg_emg_v3.py` / Arduino code on both computers.
+- **Same participant / session IDs used on both setups** (two different "P017 S001" and "P017 S002" files,
+  hence the `-2` suffix when downloading), and malformed ID `P0013`.
+  → Agree on one ID convention for both setups.
+
+### Hardware to check
+
+128-electrode cap (`eegoSports 0000`, in `KNOWN_BAD`):
+
+- **EEG channel 24 is dead** in every 128-cap session (P012, P014, P015, P016, P017).
   → Check this electrode, its connector and its cable.
-- **EEG channels 19, 87, 97 and 106** are isolated from their neighbours, bridged together and noisy at 50 Hz (P017 S001, S002).
+- **Channels 12 and 108 are bridged** in almost every session.
+- **EEG channels 19, 87, 97 and 106** are isolated from their neighbours, bridged together and noisy at 50 Hz (P017 S001).
   → Check whether they share a connector, then re-gel them.
+
+64-electrode cap (amplifiers `000650` and `000697`, in `KNOWN_BAD`):
+
+- **M1 and CP1** are bad in every session; **AF7 and AF8** too on amplifier 000650.
+- **Two blocks of electrodes record identical signals** (correlation ≈ 0.999) in every session and for
+  different participants: CP2 / P4 / O2 / P2 / PO4 / PO6 / PO8 (000650; 28/31/57/63 on 000697) and
+  PO3 / PO5 / PO7 (both amplifiers). This looks like a short circuit or gel residue in the cap rather than
+  too much gel on the day.
+  → Inspect / clean the cap at these positions.
+- **Strong 50 Hz on all channels with amplifier 000650** (P017 S001-2, S002-2: red).
+  → Check ground (GND) and reference on this setup.
 
 ### At setup
 
@@ -122,7 +164,7 @@ grep -H -E "^   (WARN|FAIL)" ~/Downloads/*_qc.txt   # only the problems, with th
 
 ### Before each recording
 
-- **No phase triggers** in P015 S002: the sync pulses were there, but not the phase codes.
+- **No phase triggers** in P014 S001 and P015 S002 run 1: the sync pulses were there, but not the phase codes.
   → In `eeg_emg_v3.py`, check that the `Trigger` line is uncommented and that the COM port (COM6 / COM10) is right.
 - **A file can be overwritten** if *Participant* / *Session* are not changed in LabRecorder.
   → Update them before clicking **Start**.
@@ -135,7 +177,3 @@ The `.xdf` is saved by LabRecorder on the CHUV computer, not on the computer run
 - **On our computer**: find a way to access these files from our computer, so we have a local copy and can run the QC there. One idea: run a second LabRecorder on our computer during the session, which records its own copy of the `.xdf`.
 
 → Test both at the next session and keep the one that works.
-
-### Not urgent
-
-- **Wrong channel names** in 128-cap files (65 names for 177 channels). Comes from the ANT-LSL configuration; the QC works around it.

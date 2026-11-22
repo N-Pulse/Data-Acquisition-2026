@@ -34,6 +34,7 @@ np.seterr(divide="ignore", invalid="ignore")
 SEARCH_DIRS = ["~/Documents/CurrentStudy", "~/Documents", "~/Downloads"]   # where to look for the latest .xdf
 MAX_AGE_H = 3                 # warn if the latest .xdf is older than 3 h
 MARKER_STREAM = "stimulus_stream"   # LSL markers sent by eeg_emg_v3.py (optional)
+MARKER_STREAM_REQUIRED = False      # True -> WARN if this LSL stream is missing from the .xdf (False -> INFO)
 SYNC_CODE = 128               # sync pulse sent every second on the TRIGGER channel
 EMG_LABEL_PREFIX = ("AUX", "BIP", "EMG")
 
@@ -46,7 +47,8 @@ EMG_MIN_CONNECTED = 4         # fewer than 4 EMG channels with signal -> WARN (0
 INFO_BAD_EEG = 0.05           # up to 5 % unusable EEG channels -> INFO (can be interpolated)
 MAX_BAD_EEG = 0.20            # > 20 % -> FAIL
 # Ground / reference
-LINE_GLOBAL_MAX = 10.0        # median 50 Hz noise over all EEG channels (relative to 1-40 Hz)
+LINE_GLOBAL_WARN = 10.0       # median 50 Hz noise over all EEG channels (relative to 1-40 Hz) -> WARN
+LINE_GLOBAL_FAIL = 20.0       # same, clearly too high -> FAIL
 CORR_GLOBAL_MAX = 0.95        # all EEG channels almost identical
 # EEG noise per channel
 LINE_REL = 5.0                # 50 Hz > 5 x the channel median -> noisy channel
@@ -63,6 +65,24 @@ EMG_LF_REL = 5.0              # 2-20 Hz energy > 5 x the other EMG channels -> h
 EMG_SHORT_R = 0.95            # two EMG channels correlated > 0.95 -> electrodes touching each other
 # Stability
 DRIFT_X = 2.0                 # rest noise x2 between start and end of session -> degraded channel
+# Known broken EEG channels, per amplifier (key = exact LSL stream name, channel numbers as printed by the QC).
+# They are still tested, but reported as "known, to repair" and no longer count towards WARN / FAIL.
+# "bridges": groups of channels known to be shorted together (a bridge inside one group is not counted).
+# Remove an entry once the electrode / cap is repaired (the QC tells you when a known channel looks OK again).
+KNOWN_BAD = {
+    "eegoSports 0000": {            # 128-electrode cap (CHUV) - seen in 9/9 sessions, Nov 2026
+        "channels": [24],
+        "bridges": [[12, 108]],
+    },
+    "eegoSports 000650": {          # 64-electrode cap - M1, CP1, AF7, AF8 bad in 3/3 sessions (P017), Nov 2026
+        "channels": [13, 21, 33, 36],
+        "bridges": [[22, 27, 31, 52, 56, 57, 63], [54, 55, 62]],
+    },
+    "eegoSports 000697": {          # 64-electrode cap - M1, CP1 bad in 2/2 sessions (P0013), Nov 2026
+        "channels": [13, 21],
+        "bridges": [[25, 51], [28, 31, 57, 63], [54, 55, 62]],
+    },
+}
 # =============================================================================
 
 PASS, INFO, SKIP, WARN, FAIL = "PASS", "INFO", "SKIP", "WARN", "FAIL"
@@ -112,9 +132,11 @@ def load_xdf(path):
         raise RuntimeError("no signal stream in the file")
     s = max(data, key=lambda s: int(s["info"]["channel_count"][0]))
     try:
-        labels = [c["label"][0] for c in s["info"]["desc"][0]["channels"][0]["channel"]]
-    except Exception:
-        labels = []
+        chans = s["info"]["desc"][0]["channels"][0]["channel"]
+    except (TypeError, KeyError, IndexError):
+        chans = []
+    # a channel without <label> (or an empty one) gives "" instead of crashing / dropping all labels
+    labels = [((c.get("label") or [None])[0] or "").strip() for c in chans]
     ts = np.asarray(s["time_stamps"])
     fs = float(s["info"]["nominal_srate"][0])
     X = np.asarray(s["time_series"], dtype=np.float32)
@@ -127,7 +149,15 @@ def load_xdf(path):
         val = np.array([int(float(v[0])) for v in mk[0]["time_series"]])
         ok = (idx > 0) & (idx < len(ts))
         markers = (idx[ok], val[ok])
-    meta = dict(name=s["info"]["name"][0], dur=float(ts[-1] - ts[0]),
+    marker_streams = [(st["info"]["name"][0], len(st["time_stamps"])) for st in streams
+                      if float(st["info"]["nominal_srate"][0]) == 0]
+    marker_out = 0
+    if mk and len(mk[0]["time_stamps"]):
+        mts = np.asarray(mk[0]["time_stamps"])
+        marker_out = int(((mts < ts[0]) | (mts > ts[-1])).sum())
+    meta = dict(name=s["info"]["name"][0], n_declared=int(s["info"]["channel_count"][0]),
+                marker_streams=marker_streams, marker_out=marker_out,
+                dur=float(ts[-1] - ts[0]),
                 fs_eff=(len(ts) - 1) / float(ts[-1] - ts[0]),
                 n_gaps=int(gaps.sum()), lost_s=float((dt[gaps] - 1 / fs).sum()), markers=markers,
                 corrupt=len(h.msgs))
@@ -166,6 +196,9 @@ class QC:
         self.mont = mont
         self.issues = {c: [] for c in self.eeg + self.emg_in}
         self.results, self.c = {}, {}
+        kb = KNOWN_BAD.get(meta.get("name"), {})
+        self.known = [c - 1 for c in kb.get("channels", []) if c - 1 in self.eeg]
+        self.known_groups = [{c - 1 for c in g} for g in kb.get("bridges", [])]
 
     # ------------------------------------------------------------ helpers
     def nm(self, c):
@@ -180,6 +213,13 @@ class QC:
 
     def bad(self, lst):
         return [c for c in lst if any(l == FAIL for l, _ in self.issues[c])]
+
+    def new(self, lst):
+        """Channels of lst that are not in the known-broken list (KNOWN_BAD)."""
+        return [c for c in lst if c not in self.known]
+
+    def known_bridge(self, a, b):
+        return any(a in g and b in g for g in self.known_groups)
 
     def good(self, lst):
         b = set(self.bad(lst))
@@ -224,10 +264,35 @@ class QC:
         if m["dur"] < 60:
             st = FAIL
             reasons.append(f"only {m['dur']:.0f} s recorded -> LabRecorder stopped too early?")
-        if self.labels and len(self.labels) != n:
-            st = worst(st, INFO)
-            reasons.append(f"[info] {len(self.labels)} channel names for {n} channels: wrong names in the file "
-                           f"(no consequence for the QC)")
+        return st, info, reasons
+
+    # ------------------------------------------------------------ 1b. channel metadata
+    def t_channels(self):
+        """Every channel must have a name in the .xdf header (desc/channels/channel).
+        Otherwise the visualisation / decoding silently drops the unnamed channels
+        (e.g. only 64 names written for a 64 EEG + EMG/AUX stream)."""
+        n_data, n_decl, labels = self.X.shape[1], self.meta["n_declared"], self.labels
+        info = [f"channel_count in header: {n_decl} | data columns: {n_data} | channel names: {len(labels)}"]
+        st, reasons = PASS, []
+        if n_data != n_decl:
+            st = FAIL
+            reasons.append(f"{n_data} data columns but channel_count = {n_decl} -> corrupted stream header")
+        if len(labels) != n_decl:
+            st = worst(st, WARN)
+            missing = n_decl - len(labels)
+            reasons.append(f"{len(labels)} channel names for {n_decl} channels"
+                           + (f" (channels {len(labels) + 1}-{n_decl} unnamed)" if missing > 0 else "")
+                           + " -> data OK but hidden in the visualisation; names probably written for the first "
+                             "amplifier only")
+        empty = [i + 1 for i, l in enumerate(labels) if not l]
+        if empty:
+            st = worst(st, WARN)
+            reasons.append(f"{len(empty)} channels with an empty name: {empty[:15]}"
+                           + (f" ... (+{len(empty) - 15})" if len(empty) > 15 else ""))
+        dup = sorted({l for l in labels if l and labels.count(l) > 1})
+        if dup:
+            st = worst(st, WARN)
+            reasons.append(f"duplicated channel names: {dup[:15]}")
         return st, info, reasons
 
     # ------------------------------------------------------------ 2. events
@@ -289,6 +354,74 @@ class QC:
             reasons.append("[info] no eyes-closed rest at the start (option disabled in eeg_emg_v3.py?)")
         real = [r for r in reasons if not r.startswith("[info]")]
         return (WARN if real else INFO if reasons else PASS), info, reasons
+
+    # ------------------------------------------------------------ 2b. markers / TRIGGER channel
+    def t_markers(self):
+        """Can the visualisation / decoding find the events?
+        - the 'TRIGGER' label must be on the channel that really holds the trigger data (last column)
+        - trigger codes must be known ones; sync pulses (128) expected
+        - the LSL marker stream (MARKER_STREAM) recorded, not empty, inside the EEG time range,
+          and consistent with the TRIGGER channel"""
+        n = self.X.shape[1]
+        tr = np.rint(self.X[:, -1]).astype(int)
+        vals = tr[np.where((tr[1:] != 0) & (tr[1:] != tr[:-1]))[0] + 1]
+        n_sync = int((vals == SYNC_CODE).sum())
+        # codes = 10 * movement_id + phase (e.g. 15 = movement 1, 'move'); + SYNC_CODE when colliding with a sync pulse
+        base = np.where(vals > SYNC_CODE, vals - SYNC_CODE, vals)
+        known = (vals == SYNC_CODE) | ((base > 0) & (base < SYNC_CODE) & np.isin(base % 10, list(PHASES)))
+        n_move_tr = int(((vals != SYNC_CODE) & known & (base % 10 == 5)).sum())
+        odd = sorted(set(vals[~known].tolist()))
+        info = [f"TRIGGER channel ({n}): {len(vals)} codes, {n_sync} sync pulses, {n_move_tr} 'move'"]
+        st, reasons = PASS, []
+
+        up = [l.upper() for l in self.labels]
+        if "TRIGGER" in up:
+            k = up.index("TRIGGER")
+            info.append(f"'TRIGGER' label on channel {k + 1}/{n}")
+            if k != n - 1:
+                st = WARN
+                reasons.append(f"'TRIGGER' label on channel {k + 1} but the trigger data is in channel {n} "
+                               f"-> a tool that looks up the trigger by name reads an EEG channel (no markers "
+                               f"displayed); fix the channel names")
+        else:
+            st = worst(st, INFO)
+            reasons.append(f"[info] no channel named 'TRIGGER' (trigger read from the last channel, {n})")
+        if odd:
+            st = worst(st, WARN)
+            reasons.append(f"unexpected trigger codes {odd[:10]} -> other protocol / Arduino code, or noise "
+                           f"on the TRIGGER line")
+        if n_sync == 0 and n_move_tr:
+            st = worst(st, INFO)
+            reasons.append(f"[info] no sync pulse ({SYNC_CODE}) on the TRIGGER channel -> different version of "
+                           f"eeg_emg_v3.py / Arduino code on this PC?")
+
+        streams = self.meta.get("marker_streams", [])
+        info.append("LSL marker streams: " + (", ".join(f"{nm} ({k} markers)" for nm, k in streams) or "none"))
+        n_lsl = [k for nm, k in streams if nm == MARKER_STREAM]
+        if not n_lsl:
+            lvl = WARN if MARKER_STREAM_REQUIRED else INFO
+            st = worst(st, lvl)
+            reasons.append(("" if lvl == WARN else "[info] ") +
+                           f"LSL stream '{MARKER_STREAM}' not recorded -> select it in LabRecorder before Start "
+                           f"(events are then only in the TRIGGER channel)")
+        elif n_lsl[0] == 0:
+            st = worst(st, WARN)
+            reasons.append(f"LSL stream '{MARKER_STREAM}' recorded but empty -> markers not sent by the script")
+        else:
+            if self.meta.get("marker_out"):
+                st = worst(st, WARN)
+                reasons.append(f"{self.meta['marker_out']} LSL markers outside the EEG recording -> clock "
+                               f"synchronisation problem, or LabRecorder started late / stopped early")
+            mk = self.meta.get("markers")
+            if mk is not None:
+                v = mk[1]
+                n_move_lsl = int(((v >= 10000) & (v < 100000) & ((v // 10000) % 10 == 5)).sum())
+                info.append(f"'move' markers: LSL {n_move_lsl} | TRIGGER {n_move_tr}")
+                if n_move_tr and n_move_lsl != n_move_tr:
+                    st = worst(st, WARN)
+                    reasons.append(f"{n_move_lsl} 'move' in the LSL markers vs {n_move_tr} on the TRIGGER "
+                                   f"channel -> markers or triggers lost")
+        return st, info, reasons
 
     # ------------------------------------------------------------ precomputation (filters, spectra)
     def _precompute(self):
@@ -352,9 +485,12 @@ class QC:
         self.emg, self.c["emg_empty"] = conn, empty
         self.c["M"] = M[[self.emg_in.index(c) for c in conn]] if conn else M[:0]
 
-        be = self.bad(self.eeg)
+        be_all = self.bad(self.eeg)
+        be = self.new(be_all)
+        kbe = [c for c in be_all if c in self.known]
         how = "active during movements" if act is not None else "with an EMG-like spectrum (no events)"
-        info = [f"inactive EEG: {len(be)}/{len(self.eeg)}" + (f"  -> {self.chs(be)}" if be else ""),
+        info = [f"inactive EEG: {len(be)}/{len(self.eeg)}" + (f"  -> {self.chs(be)}" if be else "")
+                + (f"  (+ {len(kbe)} known broken: {self.chs(kbe)})" if kbe else ""),
                 f"EMG with signal: {len(conn)}/{len(self.emg_in)} inputs ({how})"
                 + (f"  -> {self.chs(conn, 20)}" if conn else ""),
                 f"EMG without signal: {len(empty)} inputs (not plugged in: normal)"]
@@ -370,6 +506,9 @@ class QC:
         if self.c["inactive_eeg"] in (WARN, FAIL):
             reasons.append(f"{len(be)} inactive EEG channels ({fe:.0%}) -> reposition / re-gel these electrodes")
         reasons += [f"channel {self.nm(c)}: " + "; ".join(r for _, r in self.issues[c]) for c in be]
+        if kbe:
+            self.c["inactive_eeg"] = worst(self.c["inactive_eeg"], INFO)
+            reasons.append(f"[info] known broken channels (KNOWN_BAD, to repair): {self.chs(kbe)}")
         return worst(self.c["inactive_eeg"], self.c["inactive_emg"]), info, reasons
 
     # ------------------------------------------------------------ 4. ground / reference
@@ -383,15 +522,21 @@ class QC:
         self.c.update(C=C, C_ch=good, Cov=Cov)
         med_corr = np.nanmedian(np.abs(C))
         line_med = np.median([self.c["st"]["line"][c] for c in good])
-        info = [f"median 50 Hz noise (all EEG channels): {line_med:.2f}  (max {LINE_GLOBAL_MAX})",
+        info = [f"median 50 Hz noise (all EEG channels): {line_med:.2f}  (warn > {LINE_GLOBAL_WARN:g}, fail > {LINE_GLOBAL_FAIL:g})",
                 f"median similarity between channels:    {med_corr:.2f}  (max {CORR_GLOBAL_MAX})"]
-        reasons = []
-        if line_med > LINE_GLOBAL_MAX:
+        reasons, st = [], PASS
+        if line_med > LINE_GLOBAL_FAIL:
+            st = FAIL
             reasons.append("ALL channels have strong 50 Hz noise -> ground (GND) or reference badly placed, "
                            "or amplifier charging during the recording")
+        elif line_med > LINE_GLOBAL_WARN:
+            st = WARN
+            reasons.append("50 Hz a bit high on all channels -> check ground (GND) / reference contact, "
+                           "amplifier not charging")
         if med_corr > CORR_GLOBAL_MAX:
+            st = FAIL
             reasons.append("ALL channels look too similar -> faulty reference or ground")
-        return (FAIL if reasons else PASS), info, reasons
+        return st, info, reasons
 
     # ------------------------------------------------------------ 5. EEG noise per channel
     def t_eeg_noise(self):
@@ -410,25 +555,34 @@ class QC:
                 self.flag(c, FAIL, "abnormal amplitude compared to the other channels")
             if cm > 0.1 and corr[j] < CORR_REL * cm:
                 self.flag(c, FAIL, f"does not resemble any other channel (r={corr[j]:.2f}, median {cm:.2f})")
-        noisy = [c for c in good if self.issues[c]]
+        noisy = [c for c in self.new(good) if self.issues[c]]
+        k_noisy = [c for c in good if c in self.known and self.issues[c]]
         v = np.diag(Cov)
         ED = v[:, None] + v[None, :] - 2 * Cov          # variance of the difference between two channels
         iu = np.triu_indices(len(good), 1)
         lim = BRIDGE_ED_REL * np.median(ED[iu])
-        bridges = [(good[i], good[j]) for i, j in zip(*iu) if ED[i, j] < lim]
+        all_br = [(good[i], good[j]) for i, j in zip(*iu) if ED[i, j] < lim]
+        bridges = [p for p in all_br if not self.known_bridge(*p)]
+        k_bridges = [p for p in all_br if self.known_bridge(*p)]
         in_bridge = {c for p in bridges for c in p}
         unusable = [c for c in noisy if any(l == FAIL for l, _ in self.issues[c])]
         doubt = [c for c in noisy if c not in unusable]
         n = len(self.eeg)
         info = [f"unusable channels (amplitude / isolated): {len(unusable)}/{len(good)}",
                 f"doubtful channels (50 Hz / high frequency): {len(doubt)}/{len(good)}",
-                f"probable gel bridges: {len(bridges)} pairs ({len(in_bridge)} channels)"]
+                f"probable gel bridges: {len(bridges)} pairs ({len(in_bridge)} channels)"
+                + (f"  (+ {len(k_bridges)} known pairs)" if k_bridges else "")]
         detail = [f"channel {self.nm(c)}: " + "; ".join(r for _, r in self.issues[c]) + "  [unusable]"
                   for c in unusable] + [f"channel {self.nm(c)}: " + "; ".join(r for _, r in self.issues[c])
                                         for c in doubt][:15]
         if bridges:
             detail.append("gel bridges (pairs): " + ", ".join(f"{a + 1}-{b + 1}" for a, b in bridges[:40]))
-        n_bad = len(self.bad(self.eeg))
+        if k_noisy or k_bridges:
+            detail.append("[info] known (KNOWN_BAD, to repair): "
+                          + (f"channels {self.chs(k_noisy)}" if k_noisy else "")
+                          + ("; " if k_noisy and k_bridges else "")
+                          + (f"{len(k_bridges)} bridged pairs" if k_bridges else ""))
+        n_bad = len(self.new(self.bad(self.eeg)))
         if n_bad > MAX_BAD_EEG * n:
             return FAIL, info, [f"{n_bad} unusable EEG channels in total (> {MAX_BAD_EEG:.0%})"] + detail
         causes = []
@@ -440,7 +594,7 @@ class QC:
             causes.append(f"gel bridges on {len(in_bridge)} channels (> {WARN_DOUBT_EEG:.0%}) -> too much gel")
         if causes:
             return WARN, info, ["; ".join(causes)] + detail
-        return (INFO if noisy or bridges else PASS), info, detail
+        return (INFO if noisy or bridges or k_noisy or k_bridges else PASS), info, detail
 
     # ------------------------------------------------------------ 6. EMG noise
     def t_emg_noise(self):
@@ -547,7 +701,9 @@ def main():
         return
     qc = QC(X, fs, labels, meta, mont)
     tests = [("File complete", qc.t_file),
+             ("Channel names (metadata)", qc.t_channels),
              ("Events (triggers)", qc.t_events),
+             ("Markers / TRIGGER channel", qc.t_markers),
              ("Inactive channels", qc.t_inactive),
              ("EEG: ground / reference", qc.t_ground),
              ("EEG: noise per channel", qc.t_eeg_noise),
@@ -557,7 +713,8 @@ def main():
         qc.run(i, len(tests), title, fn)
 
     R = {t: s for t, (s, _) in qc.results.items()}
-    common = [R["File complete"], R["Events (triggers)"]]
+    common = [R["File complete"], R["Channel names (metadata)"], R["Events (triggers)"],
+              R["Markers / TRIGGER channel"]]
     v_eeg = verdict(common + [qc.c.get("inactive_eeg", SKIP), R["EEG: ground / reference"],
                               R["EEG: noise per channel"], qc.c.get("stab_eeg", SKIP)])
     v_emg = verdict(common + [qc.c.get("inactive_emg", SKIP), R["EMG: noise"], qc.c.get("stab_emg", SKIP)])
@@ -568,7 +725,11 @@ def main():
     log(f"usable EEG: {len(qc.eeg) - len(be)}/{len(qc.eeg)} | "
         f"EMG with signal: {len(qc.emg)} (empty inputs: {len(qc.c.get('emg_empty', []))})")
     for c in be:
-        log(f"   EEG {qc.nm(c)} unusable: " + "; ".join(r for l, r in qc.issues[c] if l == FAIL))
+        log(f"   EEG {qc.nm(c)} unusable" + (" (known, to repair)" if c in qc.known else "") + ": "
+            + "; ".join(r for l, r in qc.issues[c] if l == FAIL))
+    ok_again = [c for c in qc.known if not qc.issues[c]]
+    if ok_again:
+        log(f"   known broken channels that look OK now: {qc.chs(ok_again)} -> repaired? update KNOWN_BAD")
     for title, (st, reasons) in qc.results.items():
         main_r = next((r for r in reasons if not r.startswith("[info]")), reasons[0] if reasons else "")
         log(f"   {st:<4}  {title}" + (f"  ({main_r})" if main_r and st != PASS else ""))
@@ -589,7 +750,7 @@ def main():
             stat = FAIL if any(l == FAIL for l, _ in iss) else WARN if iss else PASS
             emg = c in qc.emg
             w.writerow([c + 1, labels[c] if named else "", "EMG" if emg else "EEG", stat,
-                        "; ".join(r for _, r in iss),
+                        ("known broken (KNOWN_BAD); " if c in qc.known else "") + "; ".join(r for _, r in iss),
                         round(s["offset"][c] / 1000, 1) if s else "", round(s["line"][c], 2) if s else "",
                         round(float(s["medfreq"][c])) if (emg and s) else ""])
         for c in qc.c.get("emg_empty", []):
