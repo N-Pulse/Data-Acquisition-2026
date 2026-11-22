@@ -1,0 +1,11 @@
+matplotlib==3.11.2
+metrics==0.0.2
+mne==1.13.2
+mne_lsl==1.15.0
+numpy==2.5.5
+psychopy>=2026.2.5
+pylsl==1.18.6
+pyserial==3.5
+pyxdf==1.18.0
+utils==1.0.2
+visuals==1.2.9
