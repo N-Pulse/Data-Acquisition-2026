@@ -71,10 +71,9 @@ def make_marker(phase_code: int, arm_code: int, base_code: int, move_code: int) 
 # Arduino trigger encoding: movement, phase
 def make_trigger(phase_code: int, move_code: int) -> int:
     """
-    To check later, not sure  
-    So:
-      - units digit = phase (1–5)
-      - higher digits = move code
+    Arduino trigger = phase code only (1 cue/rest-open, 2 rest-closed, 3 prep,
+    5 move, 7 return, 9 iti). Line is 8-bit and 128 = sync pulse, so move*10+phase
+    cannot fit. Movement/arm/baseline are in the LSL marker and events.tsv.
     """
     return phase_code
 
@@ -217,12 +216,26 @@ def setup_gui():
     dS.addField("Subject ID (e.g. sub-001)", "sub-001")
     dS.addField("EEG sampling rate (Hz)", 1024)
     dS.addField("EMG sampling rate (Hz)", 1024)
+    dS.addField("# EEG channels (e.g. 64 / 128)", 128)
+    dS.addField("# EMG channels", 8)
+    dS.addField("Total channels in LSL stream (incl. TRIGGER)", 150)  
+    dS.addField("First EMG channel (1-based)", 129)
     okS = dS.show()
-    if not dS.OK:
+    if not dS.OK: 
         core.quit()
     subj_id = str(okS[0]).strip()
     eeg_fs = float(okS[1])
     emg_fs = float(okS[2])
+    n_eeg = int(okS[3])
+    n_emg = int(okS[4])
+    total = int(okS[5])
+    first_emg = int(okS[6])
+
+    if not (n_eeg < first_emg and first_emg + n_emg - 1 < total):
+        d = gui.Dlg(title="Channel configuration error")
+        d.addText(f"Check the numbers: EEG={n_eeg}, first EMG={first_emg}, EMG={n_emg}, total={total}")
+        d.show()
+        core.quit()
 
     # 0) Resting-state options + Baseline
     d0 = gui.Dlg(title="Experiment Setup — Start Options")
@@ -352,6 +365,7 @@ def setup_gui():
 
     return dict(
         subject_id=subj_id, eeg_fs=eeg_fs, emg_fs=emg_fs,
+        n_eeg=n_eeg, n_emg=n_emg, total_channels=total, first_emg=first_emg,
         baseline_code=chosen_baseline,
         incl=selections, arms=arms,
         cue=cue, prep=prep, perf=perf, ret=ret, iti=iti, fix=fix, cdown=cdown,
@@ -596,6 +610,10 @@ def main():
     subject_id = cfg["subject_id"]
     eeg_fs = cfg["eeg_fs"]
     emg_fs = cfg["emg_fs"]
+    n_eeg = cfg["n_eeg"]
+    n_emg = cfg["n_emg"]
+    total = cfg["total_channels"]
+    first_emg = cfg["first_emg"]
 
     # Build blocks list
     moves = [k for k, v in cfg["incl"].items() if v]
@@ -925,7 +943,7 @@ def main():
             "Description": "Integer marker sent over LSL encoding phase, arm, base, movement."
         },
         "arduino_trigger": {
-            "Description": "Integer trigger code sent to Arduino (move*10 + phase)."
+            "Description": "Hardware trigger (Arduino): phase code only (1 cue/rest-open, 2 rest-closed, 3 prep, 5 move, 7 return, 9 iti). Movement identity is in lsl_marker / move_code."
         }
     }
     with open(events_json_path, "w", encoding="utf-8") as f_ej:
@@ -937,11 +955,16 @@ def main():
         "Manufacturer": "Unknown",
         "EEGReference": "n/a",
         "SamplingFrequency": eeg_fs,
+        "EMGSamplingFrequency": emg_fs,
         "PowerLineFrequency": 50,
         "SoftwareFilters": "See acquisition system configuration.",
         "RecordingType": "continuous",
         "RecordingDuration": float(event_log[-1]["lsl_t_end"] - event_log[0]["lsl_t_start"]) if event_log else None,
         "MovementsVersion": MOVEMENTS_VERSION,
+        "EEGChannelCount": n_eeg,
+        "EMGChannelCount": n_emg,
+        "TotalChannelCount": total,
+        "FirstEMGChannel": first_emg,
         "TriggerChannelCount": 1,
         "HardwareTriggers": "Arduino via Trigger class; codes stored in arduino_trigger column of events.tsv.",
         "LSLMarkers": "stimulus_stream, integer channel named 'Markers'."
@@ -954,8 +977,17 @@ def main():
     if not os.path.exists(channels_path):
         with open(channels_path, "w", newline="", encoding="utf-8") as f_ch:
             w_ch = csv.writer(f_ch, delimiter="\t")
-            w_ch.writerow(["name", "type", "units", "status", "status_description"])
-            # Leave rows empty for now; fill in manually based on your amplifier montage.
+            w_ch.writerow(["name", "type", "units", "sampling_frequency", "status", "status_description"])
+            for i in range(1, total + 1):
+                if i <= n_eeg:
+                    row = [f"EEG{i:03d}", "EEG", "uV", eeg_fs, "good", "n/a"]
+                elif first_emg <= i < first_emg + n_emg:
+                    row = [f"EMG{i - first_emg + 1:02d}", "EMG", "uV", emg_fs, "good", "n/a"]
+                elif i == total:
+                    row = ["TRIG", "TRIG", "n/a", eeg_fs, "good", "n/a"]
+                else:
+                    row = [f"UNUSED{i:03d}", "MISC", "n/a", eeg_fs, "n/a", "not recorded / unplugged"]
+                w_ch.writerow(row)
 
     # Minimal electrodes.tsv template
     electrodes_path = os.path.join(sub_dir, "electrodes.tsv")

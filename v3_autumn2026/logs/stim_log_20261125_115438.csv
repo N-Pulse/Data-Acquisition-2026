@@ -1,0 +1,7 @@
+phase,lsl_t_start,lsl_t_end,duration_s,lsl_marker,arduino_trigger,subject_id,block,rep,arm,base_code,move_code,movement_key,file,psychopy_version,eeg_fs,emg_fs
+rest_open,10375559.053214332,10375560.061493374,1.0082790423184633,9701,,sub-001,0,1,,,,,,2026.2.5,1024.0,1024.0
+rest_closed,10375560.067768876,10375561.079647416,1.011878540739417,9702,,sub-001,0,1,,,,,,2026.2.5,1024.0,1024.0
+cue,10375568.128048126,10375585.772464084,17.644415957853198,11204,,sub-001,1,0,Left,2,4,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mp4,2026.2.5,1024.0,1024.0
+prep,10375587.276513457,10375590.326823208,3.0503097511827946,31204,,sub-001,1,1,Left,2,4,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mp4,2026.2.5,1024.0,1024.0
+move,10375590.36014625,10375594.940397458,4.580251207575202,51204,,sub-001,1,1,Left,2,4,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mp4,2026.2.5,1024.0,1024.0
+return,10375594.94041275,10375596.943298833,2.0028860829770565,71204,,sub-001,1,1,Left,2,4,2_side_close_onlythumb_3sec,2_side_close_onlythumb_3sec.mp4,2026.2.5,1024.0,1024.0
