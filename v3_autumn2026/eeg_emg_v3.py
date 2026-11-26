@@ -4,10 +4,11 @@
 from psychopy import core, visual, event, gui, prefs, sound
 import psychopy  # for psychopy.__version__
 from pylsl import StreamInfo, StreamOutlet, local_clock
-import os, random, re, gc
+import os, random, re, gc, sys
 from collections import OrderedDict
 import csv, time
 import json
+import secrets
 #from visual_task_simple import Trigger  # Arduino trigger enabled
 
 # BIDS session label
@@ -21,6 +22,42 @@ trigger = None
 prefs.general['moviesLib'] = ['ffpyplayer', 'moviepy', 'avbin']
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+def generate_session_seed() -> int:
+    """New 32 bits seed 32, independant from clock and local RNG."""
+    return secrets.randbits(32)
+
+
+def build_blocks(arms, moves, order, seed):
+    """Lists (arm, movement_key) ; reproducible shuffling via a local RNG."""
+    blocks = [(a, m) for a in arms for m in moves]
+    if order.lower().startswith("rand"):
+        random.Random(seed).shuffle(blocks)
+    return blocks
+
+
+def save_session_metadata(sub_dir, subject_id, cfg, blocks, psycho_ver):
+    """Writes the seed and the explicit order of the blocks (security in case of crash)."""
+    os.makedirs(sub_dir, exist_ok=True)
+    path = os.path.join(sub_dir, f"{subject_id}_{session_label}_task_session.json")
+    meta = {
+        "SessionSeed": cfg["seed"],
+        "SeedGenerator": "secrets.randbits(32) or user-provided",
+        "ShuffleMethod": "random.Random(seed).shuffle(blocks), blocks = [(arm, movement_key) for arm in arms for movement_key in movements]",
+        "Order": cfg["order"],
+        "Arms": cfg["arms"],
+        "MovementsSelected": [k for k, v in cfg["incl"].items() if v],
+        "BaselineCode": cfg["baseline_code"],
+        "BlockOrder": [{"block": i + 1, "arm": a, "movement_key": m} for i, (a, m) in enumerate(blocks)],
+        "RepsPerMovement": cfg["reps"],
+        "MovementsVersion": MOVEMENTS_VERSION,
+        "PsychopyVersion": psycho_ver,
+        "PythonVersion": sys.version,
+        "StartTime": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=4)
+    return path
 
 # Directory with video instructions
 MEDIA_DIR = os.path.join(SCRIPT_DIR, "..", "stimuli", "videos_reencoded")
@@ -340,6 +377,7 @@ def setup_gui():
     d2.addField("Inter-block fix", 5.0)
     d2.addField("Test LSL pings?", choices=["Yes", "No"], initial="Yes")
     d2.addField("Fullscreen?", choices=["Yes", "No"], initial="Yes")
+    d2.addField("Session seed (empty = new random)", "")
     ok2 = d2.show()
     if not d2.OK:
         core.quit()
@@ -362,6 +400,13 @@ def setup_gui():
     test = (ok2[i] == "Yes" or ok2[i] == 0)
     i += 1
     fs = (ok2[i] == "Yes" or ok2[i] == 0)
+    i += 1
+    seed_txt = str(ok2[i]).strip()                             
+    try:
+        seed = int(seed_txt) if seed_txt else generate_session_seed()
+    except ValueError:
+        seed = generate_session_seed()
+        print(f"[SEED] invalid input '{seed_txt}', new seed generated")
 
     return dict(
         subject_id=subj_id, eeg_fs=eeg_fs, emg_fs=emg_fs,
@@ -376,6 +421,7 @@ def setup_gui():
         rest_open_sec=rest_open_s,
         rest_closed=rest_closed,
         rest_closed_sec=rest_closed_s,
+        seed=seed,
     )
 
 
@@ -574,16 +620,17 @@ def main():
     for p in validate_movements(MOVEMENTS, MEDIA_DIR):
         print("[CHECK]", p)
 
-    # LSL outlet once
+    # Config (before LSL outlet so the seed can go in the stream description)
+    cfg = setup_gui()
+    print(f"[SEED] session seed = {cfg['seed']}")
+
     info = StreamInfo(name='stimulus_stream', type='Markers', channel_count=1,
                       channel_format='int32', source_id='stimulus_stream_001')
     exp = info.desc().append_child("experiment")
     exp.append_child_value("task", "Upper-limb both arms")
     exp.append_child_value("version", "7.2 (event CSV with triggers)")
+    exp.append_child_value("session_seed", str(cfg["seed"]))   # <-- NEW
     outlet = StreamOutlet(info)
-
-    # Config
-    cfg = setup_gui()
 
     # Single window for the whole run; skip frame-rate measurement
     win = visual.Window(fullscr=cfg["fs"], units='height', color="black", checkTiming=False)
@@ -624,9 +671,15 @@ def main():
         win.close()
         core.quit()
 
-    blocks = [(a, m) for a in cfg["arms"] for m in moves]
+    blocks = build_blocks(cfg["arms"], moves, cfg["order"], cfg["seed"])
     if cfg["order"].lower().startswith("rand"):
         random.shuffle(blocks)
+
+    # Save seed + explicit block order BEFORE the run starts
+    bids_root = os.path.join(os.getcwd(), "Data", "raw")
+    sub_dir = os.path.join(bids_root, subject_id, session_label, "eeg-emg")
+    session_meta_path = save_session_metadata(sub_dir, subject_id, cfg, blocks, psycho_ver)
+    print(f"[SEED] metadata saved: {session_meta_path}")
 
     # Optional LSL test pings
     if cfg["test"]:
@@ -860,9 +913,6 @@ def main():
         w.writerows(event_log)
 
     # --- BIDS-style exports ---
-    # Root: Data/raw/<sub>/ses-001/eeg-emg/
-    bids_root = os.path.join(os.getcwd(), "Data", "raw")
-    sub_dir = os.path.join(bids_root, subject_id, session_label, "eeg-emg")
     os.makedirs(sub_dir, exist_ok=True)
 
     # EDF filename to use in LabRecorder (you must configure LabRecorder separately)
@@ -967,7 +1017,9 @@ def main():
         "FirstEMGChannel": first_emg,
         "TriggerChannelCount": 1,
         "HardwareTriggers": "Arduino via Trigger class; codes stored in arduino_trigger column of events.tsv.",
-        "LSLMarkers": "stimulus_stream, integer channel named 'Markers'."
+        "LSLMarkers": "stimulus_stream, integer channel named 'Markers'.",
+        "SessionSeed": cfg["seed"],
+        "BlockOrder": [f"{a}:{m}" for a, m in blocks],
     }
     with open(edf_json_path, "w", encoding="utf-8") as f_eegj:
         json.dump(eeg_meta, f_eegj, indent=4)

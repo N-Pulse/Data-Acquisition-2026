@@ -32,6 +32,6 @@
         "Description": "Integer marker sent over LSL encoding phase, arm, base, movement."
     },
     "arduino_trigger": {
-        "Description": "Integer trigger code sent to Arduino (move*10 + phase)."
+        "Description": "Hardware trigger (Arduino): phase code only (1 cue/rest-open, 2 rest-closed, 3 prep, 5 move, 7 return, 9 iti). Movement identity is in lsl_marker / move_code."
     }
 }
