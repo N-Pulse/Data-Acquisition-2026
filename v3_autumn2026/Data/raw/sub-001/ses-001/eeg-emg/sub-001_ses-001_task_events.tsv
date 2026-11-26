@@ -1,7 +1,7 @@
 onset	duration	trial_type	arm	base_code	move_code	movement_key	block	rep	lsl_marker	arduino_trigger
-0.0	1.009542915970087	rest_open					0	1	9701	
-1.0141108743846416	1.0121382903307676	rest_closed					0	1	9702	
-9.076559457927942	6.255746083334088	cue	Left	2	36	2_side_close_onlythumb_palm_3sec	1	0	11236	
-16.841971749439836	3.0499453749507666	prep	Left	2	36	2_side_close_onlythumb_palm_3sec	1	1	31236	
-19.908312624320388	6.727586666122079	move	Left	2	36	2_side_close_onlythumb_palm_3sec	1	1	51236	
-26.635918790474534	2.00554658472538	return	Left	2	36	2_side_close_onlythumb_palm_3sec	1	1	71236	
+0.0	1.0083763748407364	rest_open					0	1	9701	
+1.0136308334767818	1.0117486659437418	rest_closed					0	1	9702	
+9.09118095971644	3.2743650395423174	cue	Left	2	4	2_side_close_onlythumb_3sec	1	0	11204	
+13.874791542068124	3.0498099587857723	prep	Left	2	4	2_side_close_onlythumb_3sec	1	1	31204	
+16.957652375102043	4.6039379592984915	move	Left	2	4	2_side_close_onlythumb_3sec	1	1	51204	
+21.561893291771412	2.012087082490325	return	Left	2	4	2_side_close_onlythumb_3sec	1	1	71204	

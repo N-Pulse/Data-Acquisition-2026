@@ -59,6 +59,181 @@ def save_session_metadata(sub_dir, subject_id, cfg, blocks, psycho_ver):
         json.dump(meta, f, indent=4)
     return path
 
+class EventLogger(list):
+    """Liste d'événements qui écrit aussi chaque ligne dans le CSV immédiatement."""
+    FIELDS = [
+        "phase", "lsl_t_start", "lsl_t_end", "duration_s",
+        "lsl_marker", "arduino_trigger",
+        "subject_id", "block", "rep", "arm", "base_code", "move_code",
+        "movement_key", "file", "psychopy_version", "eeg_fs", "emg_fs"
+    ]
+
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+        self._f = open(path, "w", newline="", encoding="utf-8")
+        self._w = csv.DictWriter(self._f, fieldnames=self.FIELDS)
+        self._w.writeheader()
+        self._f.flush()
+
+    def append(self, row):
+        super().append(row)
+        self._w.writerow(row)
+        self._f.flush()          # survit à un crash du script
+
+    def close(self):
+        if not self._f.closed:
+            self._f.close()
+
+def write_bids_exports(event_log, cfg, blocks, sub_dir, subject_id,
+                       eeg_fs, emg_fs, n_eeg, n_emg, total, first_emg, completed):
+    # EDF filename to use in LabRecorder (you must configure LabRecorder separately)
+    edf_base = f"{subject_id}_{session_label}_task_movement"
+    edf_name = edf_base + ".edf"
+    edf_json_path = os.path.join(sub_dir, edf_base + ".json")
+
+    # EVENTS: sub-XXX_ses-001_task_events.tsv + .json
+    events_base = f"{subject_id}_{session_label}_task_events"
+    events_path = os.path.join(sub_dir, events_base + ".tsv")
+    events_json_path = os.path.join(sub_dir, events_base + ".json")
+
+    # Compute onset relative to first event
+    if event_log:
+        t0 = event_log[0]["lsl_t_start"]
+    else:
+        t0 = 0.0
+
+    # Write events.tsv
+    with open(events_path, "w", newline="", encoding="utf-8") as f_ev:
+        w_ev = csv.writer(f_ev, delimiter="\t")
+        w_ev.writerow([
+            "onset", "duration", "trial_type",
+            "arm", "base_code", "move_code", "movement_key",
+            "block", "rep",
+            "lsl_marker", "arduino_trigger"
+        ])
+        for ev in event_log:
+            onset = float(ev["lsl_t_start"] - t0) if ev["lsl_t_start"] is not None else ""
+            duration = float(ev["duration_s"]) if ev["duration_s"] is not None else ""
+            trial_type = ev["phase"]
+            w_ev.writerow([
+                onset,
+                duration,
+                trial_type,
+                ev["arm"],
+                ev["base_code"],
+                ev["move_code"],
+                ev["movement_key"],
+                ev["block"],
+                ev["rep"],
+                ev["lsl_marker"],
+                ev["arduino_trigger"],
+            ])
+
+    # Write events.json (column metadata)
+    events_meta = {
+        "onset": {
+            "Description": "Event onset in seconds, relative to first logged event.",
+            "Units": "s"
+        },
+        "duration": {
+            "Description": "Event duration.",
+            "Units": "s"
+        },
+        "trial_type": {
+            "Description": "Phase type (rest_open, rest_closed, cue, prep, move, return)."
+        },
+        "arm": {
+            "Description": "Which arm was used (Left, Right, or None)."
+        },
+        "base_code": {
+            "Description": "Baseline position 1-6. orientation = ((code-1) % 3) + 1 (1: up, 2: side, 3: down); hand state = open if code <= 3, closed if code >= 4."
+        },
+        "move_code": {
+            "Description": "Canonical movement code, independent of baseline position."
+        },
+        "movement_key": {
+            "Description": "Key from MOVEMENTS dict describing the movement."
+        },
+        "block": {
+            "Description": "Block index (1-based)."
+        },
+        "rep": {
+            "Description": "Repetition index within a block (0 for cue, 1..N for trials)."
+        },
+        "lsl_marker": {
+            "Description": "Integer marker sent over LSL encoding phase, arm, base, movement."
+        },
+        "arduino_trigger": {
+            "Description": "Hardware trigger (Arduino): phase code only (1 cue/rest-open, 2 rest-closed, 3 prep, 5 move, 7 return, 9 iti). Movement identity is in lsl_marker / move_code."
+        }
+    }
+    with open(events_json_path, "w", encoding="utf-8") as f_ej:
+        json.dump(events_meta, f_ej, indent=4)
+
+    # Write EEG/EMG sidecar JSON for EDF (minimal; edit as needed)
+    eeg_meta = {
+        "TaskName": "movement",
+        "Manufacturer": "Unknown",
+        "EEGReference": "n/a",
+        "SamplingFrequency": eeg_fs,
+        "EMGSamplingFrequency": emg_fs,
+        "PowerLineFrequency": 50,
+        "SoftwareFilters": "See acquisition system configuration.",
+        "RecordingType": "continuous",
+        "RecordingDuration": float(event_log[-1]["lsl_t_end"] - event_log[0]["lsl_t_start"]) if event_log else None,
+        "MovementsVersion": MOVEMENTS_VERSION,
+        "EEGChannelCount": n_eeg,
+        "EMGChannelCount": n_emg,
+        "TotalChannelCount": total,
+        "FirstEMGChannel": first_emg,
+        "TriggerChannelCount": 1,
+        "HardwareTriggers": "Arduino via Trigger class; codes stored in arduino_trigger column of events.tsv.",
+        "LSLMarkers": "stimulus_stream, integer channel named 'Markers'.",
+        "SessionSeed": cfg["seed"],
+        "BlockOrder": [f"{a}:{m}" for a, m in blocks],
+        "RunCompleted": completed,
+    }
+    with open(edf_json_path, "w", encoding="utf-8") as f_eegj:
+        json.dump(eeg_meta, f_eegj, indent=4)
+
+    # Minimal channels.tsv template (you can edit later with real channel names/types)
+    channels_path = os.path.join(sub_dir, "channels.tsv")
+    if not os.path.exists(channels_path):
+        with open(channels_path, "w", newline="", encoding="utf-8") as f_ch:
+            w_ch = csv.writer(f_ch, delimiter="\t")
+            w_ch.writerow(["name", "type", "units", "sampling_frequency", "status", "status_description"])
+            for i in range(1, total + 1):
+                if i <= n_eeg:
+                    row = [f"EEG{i:03d}", "EEG", "uV", eeg_fs, "good", "n/a"]
+                elif first_emg <= i < first_emg + n_emg:
+                    row = [f"EMG{i - first_emg + 1:02d}", "EMG", "uV", emg_fs, "good", "n/a"]
+                elif i == total:
+                    row = ["TRIG", "TRIG", "n/a", eeg_fs, "good", "n/a"]
+                else:
+                    row = [f"UNUSED{i:03d}", "MISC", "n/a", eeg_fs, "n/a", "not recorded / unplugged"]
+                w_ch.writerow(row)
+
+    # Minimal electrodes.tsv template
+    electrodes_path = os.path.join(sub_dir, "electrodes.tsv")
+    if not os.path.exists(electrodes_path):
+        with open(electrodes_path, "w", newline="", encoding="utf-8") as f_el:
+            w_el = csv.writer(f_el, delimiter="\t")
+            w_el.writerow(["name", "x", "y", "z", "type", "material"])
+            # You can add rows here manually if you have 3D coordinates.
+
+    # Minimal coordsystem.json (BIDS-style)
+    coordsystem_path = os.path.join(sub_dir, "coordsystem.json")
+    if not os.path.exists(coordsystem_path):
+        coords_meta = {
+            "EEGCoordinateSystem": "unknown",
+            "EEGCoordinateUnits": "mm",
+            "EEGCoordinateSystemDescription": "Coordinate system not specified. Update with your system (e.g., 'Cap layout in subject space')."
+        }
+        with open(coordsystem_path, "w", encoding="utf-8") as f_cs:
+            json.dump(coords_meta, f_cs, indent=4)
+    return edf_name
+
 # Directory with video instructions
 MEDIA_DIR = os.path.join(SCRIPT_DIR, "..", "stimuli", "videos_reencoded")
 #MEDIA_DIR = r"C:\Users\eeguser\Documents\NPulseBCI\github\DSI\data\kraken_recording\data\videos_measures_720p"
@@ -652,7 +827,10 @@ def main():
     instruction_move = visual.TextStim(win, text="Perform the movement synchronized with the video", color="white", height=0.05)
 
     # --- event log (per-event rows) ---
-    event_log = []
+    log_dir = os.path.join(os.getcwd(), "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, f"stim_log_{time.strftime('%Y%m%d_%H%M%S')}.csv")
+    event_log = EventLogger(log_path)
     psycho_ver = psychopy.__version__
     subject_id = cfg["subject_id"]
     eeg_fs = cfg["eeg_fs"]
@@ -672,190 +850,132 @@ def main():
         core.quit()
 
     blocks = build_blocks(cfg["arms"], moves, cfg["order"], cfg["seed"])
-    if cfg["order"].lower().startswith("rand"):
-        random.shuffle(blocks)
 
     # Save seed + explicit block order BEFORE the run starts
     bids_root = os.path.join(os.getcwd(), "Data", "raw")
     sub_dir = os.path.join(bids_root, subject_id, session_label, "eeg-emg")
     session_meta_path = save_session_metadata(sub_dir, subject_id, cfg, blocks, psycho_ver)
     print(f"[SEED] metadata saved: {session_meta_path}")
+    completed = False
+    try:
+        # Optional LSL test pings
+        if cfg["test"]:
+            for _ in range(5):
+                outlet.push_sample([9999])
+                core.wait(0.5)
 
-    # Optional LSL test pings
-    if cfg["test"]:
-        for _ in range(5):
-            outlet.push_sample([9999])
-            core.wait(0.5)
-
-    # Ready screen
-    ready.draw()
-    win.flip()
-    outlet.push_sample([8888])
-    core.wait(1.5)
-
-    # Pre-run global countdown
-    if cfg["cdown"] > 0:
-        show_countdown(win, cfg["cdown"], countdown)
-
-    # Optional resting-state at experiment start
-    if cfg["rest_open"] or cfg["rest_closed"]:
-        record_resting_state(
-            win=win, outlet=outlet, event_log=event_log,
-            label_stim=label, fix_stim=fix,
-            psycho_ver=psycho_ver, subject_id=subject_id,
-            eeg_fs=eeg_fs, emg_fs=emg_fs,
-            eyes_open_sound=eyes_open_sound,
-            do_open=cfg["rest_open"], open_sec=cfg["rest_open_sec"],
-            do_closed=cfg["rest_closed"], closed_sec=cfg["rest_closed_sec"]
-        )
-
-    # Run blocks
-    for bi, (arm, mkey) in enumerate(blocks):
-        move_code = MOVEMENTS[mkey]["code"]
-        base_code = baseline_of(MOVEMENTS[mkey])
-
-        # Resolve best file for this arm (tries *_left/_right then generic)
-        media_path = resolve_media_path(mkey, arm)
-        if media_path is None:
-            print(f"[SKIP] vidéo introuvable : {mkey} ({arm})")
-            outlet.push_sample([9801])  # marker « bloc ignoré » (code libre, à documenter)
-            show_message(win, f"VIDEO NOT FOUND\n{arm} — {mkey}\nSkipping to next block", 4.0)
-            continue
-        else : 
-            print(media_path)
-        nice_label = f"{arm.upper()} — {strip_baseline_suffix(MOVEMENTS[mkey]['label'])}"
-
-        block_name = mkey
-        block_name = block_name[2:].replace("_", " ")
-        new_block_instruction = visual.TextStim(win, text=f"New movement block : \n {block_name}", color="white", height=0.05)
-        new_block_instruction.draw()
+        # Ready screen
+        ready.draw()
         win.flip()
-        core.wait(4.0)
+        outlet.push_sample([8888])
+        core.wait(1.5)
 
-        # CUE INSTRUCTION
-        instruction_prep.draw()
-        win.flip()
-        core.wait(2.0)  # show 2 seconds (or change duration)
+        # Pre-run global countdown
+        if cfg["cdown"] > 0:
+            show_countdown(win, cfg["cdown"], countdown)
 
-        # Fixation before cue
-        if cfg["fix"] > 0:
-            label.text = nice_label
-            fix.draw()
-            label.draw()
+        # Optional resting-state at experiment start
+        if cfg["rest_open"] or cfg["rest_closed"]:
+            record_resting_state(
+                win=win, outlet=outlet, event_log=event_log,
+                label_stim=label, fix_stim=fix,
+                psycho_ver=psycho_ver, subject_id=subject_id,
+                eeg_fs=eeg_fs, emg_fs=emg_fs,
+                eyes_open_sound=eyes_open_sound,
+                do_open=cfg["rest_open"], open_sec=cfg["rest_open_sec"],
+                do_closed=cfg["rest_closed"], closed_sec=cfg["rest_closed_sec"]
+            )
+
+        # Run blocks
+        for bi, (arm, mkey) in enumerate(blocks):
+            move_code = MOVEMENTS[mkey]["code"]
+            base_code = baseline_of(MOVEMENTS[mkey])
+
+            # Resolve best file for this arm (tries *_left/_right then generic)
+            media_path = resolve_media_path(mkey, arm)
+            if media_path is None:
+                print(f"[SKIP] vidéo introuvable : {mkey} ({arm})")
+                outlet.push_sample([9801])  # marker « bloc ignoré » (code libre, à documenter)
+                show_message(win, f"VIDEO NOT FOUND\n{arm} — {mkey}\nSkipping to next block", 4.0)
+                continue
+            else : 
+                print(media_path)
+            nice_label = f"{arm.upper()} — {strip_baseline_suffix(MOVEMENTS[mkey]['label'])}"
+
+            block_name = mkey
+            block_name = block_name[2:].replace("_", " ")
+            new_block_instruction = visual.TextStim(win, text=f"New movement block : \n {block_name}", color="white", height=0.05)
+            new_block_instruction.draw()
             win.flip()
-            core.wait(cfg["fix"])
+            core.wait(4.0)
 
-        # CUE
-        t_start = local_clock()
-        lsl_marker, hw_trigger = push_event_codes(outlet, arm, "cue", base_code, move_code, trigger)
-        #lsl_marker, hw_trigger = push_event_codes(outlet, arm, "cue", base_code, move_code)
-        play_movie_robust(win, media_path, overlay_text=nice_label, dur=cfg["cue"])  # or dur=None
-        t_end = local_clock()
-        event_log.append({
-            "phase": "cue",
-            "lsl_t_start": t_start,
-            "lsl_t_end": t_end,
-            "duration_s": t_end - t_start,
-            "lsl_marker": lsl_marker,
-            "arduino_trigger": hw_trigger,
-            "subject_id": subject_id,
-            "block": bi + 1,
-            "rep": 0,
-            "arm": arm,
-            "base_code": base_code,
-            "move_code": move_code,
-            "movement_key": mkey,
-            "file": os.path.basename(media_path) if media_path else None,
-            "psychopy_version": psycho_ver,
-            "eeg_fs": eeg_fs,
-            "emg_fs": emg_fs,
-        })
-
-        for r in range(cfg["reps"]):
-            event.clearEvents()
-
-            # INSTRUCTION BEFORE MOVE
-            instruction_move.draw()
+            # CUE INSTRUCTION
+            instruction_prep.draw()
             win.flip()
             _t0 = core.getTime()
-            movie_stim = load_movie(win, media_path)   # precharging during instruction
-            core.wait(max(0.0, 1.5 - (core.getTime() - _t0)))
+            cue_stim = load_movie(win, media_path)        # predowloading 
+            core.wait(max(0.0, 2.0 - (core.getTime() - _t0)))
 
-            # PREP
-            t_start = local_clock()
-            lsl_marker, hw_trigger = push_event_codes(outlet, arm, "prep", base_code, move_code, trigger)
-            #lsl_marker, hw_trigger = push_event_codes(outlet, arm, "prep", base_code, move_code)
-            show_countdown(win, cfg["prep"], countdown)
-            t_end = local_clock()
-            event_log.append({
-                "phase": "prep",
-                "lsl_t_start": t_start,
-                "lsl_t_end": t_end,
-                "duration_s": t_end - t_start,
-                "lsl_marker": lsl_marker,
-                "arduino_trigger": hw_trigger,
-                "subject_id": subject_id,
-                "block": bi + 1,
-                "rep": r + 1,
-                "arm": arm,
-                "base_code": base_code,
-                "move_code": move_code,
-                "movement_key": mkey,
-                "file": os.path.basename(media_path) if media_path else None,
-                "psychopy_version": psycho_ver,
-                "eeg_fs": eeg_fs,
-                "emg_fs": emg_fs,
-            })
-
-            # MOVE (full video recommended; set dur=cfg["perf"] for fixed window)
-            t_holder = {}
-            def _send_move_marker():
-                t_holder["t"] = local_clock()
-                t_holder["marker"], t_holder["trig"] = push_event_codes(
-                    outlet, arm, "move", base_code, move_code, trigger)
-
-            play_movie_robust(win, media_path, overlay_text=nice_label, dur=None,
-                              stim=movie_stim, on_first_flip=_send_move_marker)
-            if "t" not in t_holder:      # sécurité (erreur vidéo : le marqueur part quand même)
-                _send_move_marker()
-            movie_stim = None
-            t_start = t_holder["t"]
-            lsl_marker, hw_trigger = t_holder["marker"], t_holder["trig"]
-            t_end = local_clock()
-            event_log.append({
-                "phase": "move",
-                "lsl_t_start": t_start,
-                "lsl_t_end": t_end,
-                "duration_s": t_end - t_start,
-                "lsl_marker": lsl_marker,
-                "arduino_trigger": hw_trigger,
-                "subject_id": subject_id,
-                "block": bi + 1,
-                "rep": r + 1,
-                "arm": arm,
-                "base_code": base_code,
-                "move_code": move_code,
-                "movement_key": mkey,
-                "file": os.path.basename(media_path) if media_path else None,
-                "psychopy_version": psycho_ver,
-                "eeg_fs": eeg_fs,
-                "emg_fs": emg_fs,
-            })
-
-            # RETURN (text only)
-            if cfg["ret"] > 0:
-                t_start = local_clock()
-                lsl_marker, hw_trigger = push_event_codes(outlet, arm, "return", base_code, move_code, trigger)
-                #lsl_marker, hw_trigger = push_event_codes(outlet, arm, "move", base_code, move_code)
-
-
+            # Fixation before cue
+            if cfg["fix"] > 0:
+                label.text = nice_label
                 fix.draw()
-                retxt.draw()
+                label.draw()
                 win.flip()
-                core.wait(cfg["ret"])
+                core.wait(cfg["fix"])
+
+            # CUE
+            cue_holder = {}
+            def _send_cue_marker():
+                cue_holder["t"] = local_clock()
+                cue_holder["marker"], cue_holder["trig"] = push_event_codes(
+                    outlet, arm, "cue", base_code, move_code, trigger)
+
+            play_movie_robust(win, media_path, overlay_text=nice_label, dur=cfg["cue"],
+                            stim=cue_stim, on_first_flip=_send_cue_marker)
+            if "t" not in cue_holder:
+                _send_cue_marker()
+            t_start = cue_holder["t"]
+            lsl_marker, hw_trigger = cue_holder["marker"], cue_holder["trig"]
+            t_end = local_clock()
+            event_log.append({
+                "phase": "cue",
+                "lsl_t_start": t_start,
+                "lsl_t_end": t_end,
+                "duration_s": t_end - t_start,
+                "lsl_marker": lsl_marker,
+                "arduino_trigger": hw_trigger,
+                "subject_id": subject_id,
+                "block": bi + 1,
+                "rep": 0,
+                "arm": arm,
+                "base_code": base_code,
+                "move_code": move_code,
+                "movement_key": mkey,
+                "file": os.path.basename(media_path) if media_path else None,
+                "psychopy_version": psycho_ver,
+                "eeg_fs": eeg_fs,
+                "emg_fs": emg_fs,
+            })
+
+            for r in range(cfg["reps"]):
+                event.clearEvents()
+
+                # INSTRUCTION BEFORE MOVE
+                instruction_move.draw()
+                win.flip()
+                _t0 = core.getTime()
+                movie_stim = load_movie(win, media_path)   # precharging during instruction
+                core.wait(max(0.0, 1.5 - (core.getTime() - _t0)))
+
+                # PREP
+                t_start = local_clock()
+                lsl_marker, hw_trigger = push_event_codes(outlet, arm, "prep", base_code, move_code, trigger)
+                #lsl_marker, hw_trigger = push_event_codes(outlet, arm, "prep", base_code, move_code)
+                show_countdown(win, cfg["prep"], countdown)
                 t_end = local_clock()
                 event_log.append({
-                    "phase": "return",
+                    "phase": "prep",
                     "lsl_t_start": t_start,
                     "lsl_t_end": t_end,
                     "duration_s": t_end - t_start,
@@ -874,191 +994,109 @@ def main():
                     "emg_fs": emg_fs,
                 })
 
-            # ITI (not requested for the CSV / BIDS events, but still send markers if desired)
-            if cfg["iti"] > 0:
-                push_event_codes(outlet, arm, "iti", base_code, move_code, trigger)
-                #push_event_codes(outlet, arm, "move", base_code, move_code)
+                # MOVE (full video recommended; set dur=cfg["perf"] for fixed window)
+                t_holder = {}
+                def _send_move_marker():
+                    t_holder["t"] = local_clock()
+                    t_holder["marker"], t_holder["trig"] = push_event_codes(
+                        outlet, arm, "move", base_code, move_code, trigger)
 
+                play_movie_robust(win, media_path, overlay_text=nice_label, dur=None,
+                                stim=movie_stim, on_first_flip=_send_move_marker)
+                if "t" not in t_holder:      # sécurité (erreur vidéo : le marqueur part quand même)
+                    _send_move_marker()
+                movie_stim = None
+                t_start = t_holder["t"]
+                lsl_marker, hw_trigger = t_holder["marker"], t_holder["trig"]
+                t_end = local_clock()
+                event_log.append({
+                    "phase": "move",
+                    "lsl_t_start": t_start,
+                    "lsl_t_end": t_end,
+                    "duration_s": t_end - t_start,
+                    "lsl_marker": lsl_marker,
+                    "arduino_trigger": hw_trigger,
+                    "subject_id": subject_id,
+                    "block": bi + 1,
+                    "rep": r + 1,
+                    "arm": arm,
+                    "base_code": base_code,
+                    "move_code": move_code,
+                    "movement_key": mkey,
+                    "file": os.path.basename(media_path) if media_path else None,
+                    "psychopy_version": psycho_ver,
+                    "eeg_fs": eeg_fs,
+                    "emg_fs": emg_fs,
+                })
+
+                # RETURN (text only)
+                if cfg["ret"] > 0:
+                    t_start = local_clock()
+                    lsl_marker, hw_trigger = push_event_codes(outlet, arm, "return", base_code, move_code, trigger)
+                    #lsl_marker, hw_trigger = push_event_codes(outlet, arm, "move", base_code, move_code)
+
+
+                    fix.draw()
+                    retxt.draw()
+                    win.flip()
+                    core.wait(cfg["ret"])
+                    t_end = local_clock()
+                    event_log.append({
+                        "phase": "return",
+                        "lsl_t_start": t_start,
+                        "lsl_t_end": t_end,
+                        "duration_s": t_end - t_start,
+                        "lsl_marker": lsl_marker,
+                        "arduino_trigger": hw_trigger,
+                        "subject_id": subject_id,
+                        "block": bi + 1,
+                        "rep": r + 1,
+                        "arm": arm,
+                        "base_code": base_code,
+                        "move_code": move_code,
+                        "movement_key": mkey,
+                        "file": os.path.basename(media_path) if media_path else None,
+                        "psychopy_version": psycho_ver,
+                        "eeg_fs": eeg_fs,
+                        "emg_fs": emg_fs,
+                    })
+
+                # ITI (not requested for the CSV / BIDS events, but still send markers if desired)
+                if cfg["iti"] > 0:
+                    push_event_codes(outlet, arm, "iti", base_code, move_code, trigger)
+                    #push_event_codes(outlet, arm, "move", base_code, move_code)
+
+                    fix.draw()
+                    win.flip()
+                    core.wait(cfg["iti"])
+
+            # Inter-block fixation
+            if bi < len(blocks) - 1 and cfg["ibfix"] > 0:
                 fix.draw()
                 win.flip()
-                core.wait(cfg["iti"])
+                core.wait(cfg["ibfix"])
 
-        # Inter-block fixation
-        if bi < len(blocks) - 1 and cfg["ibfix"] > 0:
-            fix.draw()
-            win.flip()
-            core.wait(cfg["ibfix"])
+        # --- automatic end screen ---
+        endt.draw()
+        win.flip()
+        outlet.push_sample([8899])
+        completed = True
+    finally:
+        event_log.close()
+        edf_name = write_bids_exports(
+            event_log, cfg, blocks, sub_dir, subject_id,
+            eeg_fs, emg_fs, n_eeg, n_emg, total, first_emg, completed)
+        if not completed:
+            print("\n[!] Run interrompu : logs sauvegardés avec les événements déjà terminés.")
 
-    # --- automatic end screen ---
-    endt.draw()
-    win.flip()
-    outlet.push_sample([8899])
-
-    # --- save original event log to CSV (legacy) ---
-    log_dir = os.path.join(os.getcwd(), "logs")
-    os.makedirs(log_dir, exist_ok=True)
-    log_name = f"stim_log_{time.strftime('%Y%m%d_%H%M%S')}.csv"
-    log_path = os.path.join(log_dir, log_name)
-
-    fieldnames = [
-        "phase", "lsl_t_start", "lsl_t_end", "duration_s",
-        "lsl_marker", "arduino_trigger",
-        "subject_id", "block", "rep", "arm", "base_code", "move_code",
-        "movement_key", "file", "psychopy_version", "eeg_fs", "emg_fs"
-    ]
-
-    with open(log_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fieldnames)
-        w.writeheader()
-        w.writerows(event_log)
-
-    # --- BIDS-style exports ---
-    os.makedirs(sub_dir, exist_ok=True)
-
-    # EDF filename to use in LabRecorder (you must configure LabRecorder separately)
-    edf_base = f"{subject_id}_{session_label}_task_movement"
-    edf_name = edf_base + ".edf"
-    edf_json_path = os.path.join(sub_dir, edf_base + ".json")
-
-    # EVENTS: sub-XXX_ses-001_task_events.tsv + .json
-    events_base = f"{subject_id}_{session_label}_task_events"
-    events_path = os.path.join(sub_dir, events_base + ".tsv")
-    events_json_path = os.path.join(sub_dir, events_base + ".json")
-
-    # Compute onset relative to first event
-    if event_log:
-        t0 = event_log[0]["lsl_t_start"]
-    else:
-        t0 = 0.0
-
-    # Write events.tsv
-    with open(events_path, "w", newline="", encoding="utf-8") as f_ev:
-        w_ev = csv.writer(f_ev, delimiter="\t")
-        w_ev.writerow([
-            "onset", "duration", "trial_type",
-            "arm", "base_code", "move_code", "movement_key",
-            "block", "rep",
-            "lsl_marker", "arduino_trigger"
-        ])
-        for ev in event_log:
-            onset = float(ev["lsl_t_start"] - t0) if ev["lsl_t_start"] is not None else ""
-            duration = float(ev["duration_s"]) if ev["duration_s"] is not None else ""
-            trial_type = ev["phase"]
-            w_ev.writerow([
-                onset,
-                duration,
-                trial_type,
-                ev["arm"],
-                ev["base_code"],
-                ev["move_code"],
-                ev["movement_key"],
-                ev["block"],
-                ev["rep"],
-                ev["lsl_marker"],
-                ev["arduino_trigger"],
-            ])
-
-    # Write events.json (column metadata)
-    events_meta = {
-        "onset": {
-            "Description": "Event onset in seconds, relative to first logged event.",
-            "Units": "s"
-        },
-        "duration": {
-            "Description": "Event duration.",
-            "Units": "s"
-        },
-        "trial_type": {
-            "Description": "Phase type (rest_open, rest_closed, cue, prep, move, return)."
-        },
-        "arm": {
-            "Description": "Which arm was used (Left, Right, or None)."
-        },
-        "base_code": {
-            "Description": "Baseline position 1-6. orientation = ((code-1) % 3) + 1 (1: up, 2: side, 3: down); hand state = open if code <= 3, closed if code >= 4."
-        },
-        "move_code": {
-            "Description": "Canonical movement code, independent of baseline position."
-        },
-        "movement_key": {
-            "Description": "Key from MOVEMENTS dict describing the movement."
-        },
-        "block": {
-            "Description": "Block index (1-based)."
-        },
-        "rep": {
-            "Description": "Repetition index within a block (0 for cue, 1..N for trials)."
-        },
-        "lsl_marker": {
-            "Description": "Integer marker sent over LSL encoding phase, arm, base, movement."
-        },
-        "arduino_trigger": {
-            "Description": "Hardware trigger (Arduino): phase code only (1 cue/rest-open, 2 rest-closed, 3 prep, 5 move, 7 return, 9 iti). Movement identity is in lsl_marker / move_code."
-        }
-    }
-    with open(events_json_path, "w", encoding="utf-8") as f_ej:
-        json.dump(events_meta, f_ej, indent=4)
-
-    # Write EEG/EMG sidecar JSON for EDF (minimal; edit as needed)
-    eeg_meta = {
-        "TaskName": "movement",
-        "Manufacturer": "Unknown",
-        "EEGReference": "n/a",
-        "SamplingFrequency": eeg_fs,
-        "EMGSamplingFrequency": emg_fs,
-        "PowerLineFrequency": 50,
-        "SoftwareFilters": "See acquisition system configuration.",
-        "RecordingType": "continuous",
-        "RecordingDuration": float(event_log[-1]["lsl_t_end"] - event_log[0]["lsl_t_start"]) if event_log else None,
-        "MovementsVersion": MOVEMENTS_VERSION,
-        "EEGChannelCount": n_eeg,
-        "EMGChannelCount": n_emg,
-        "TotalChannelCount": total,
-        "FirstEMGChannel": first_emg,
-        "TriggerChannelCount": 1,
-        "HardwareTriggers": "Arduino via Trigger class; codes stored in arduino_trigger column of events.tsv.",
-        "LSLMarkers": "stimulus_stream, integer channel named 'Markers'.",
-        "SessionSeed": cfg["seed"],
-        "BlockOrder": [f"{a}:{m}" for a, m in blocks],
-    }
-    with open(edf_json_path, "w", encoding="utf-8") as f_eegj:
-        json.dump(eeg_meta, f_eegj, indent=4)
-
-    # Minimal channels.tsv template (you can edit later with real channel names/types)
-    channels_path = os.path.join(sub_dir, "channels.tsv")
-    if not os.path.exists(channels_path):
-        with open(channels_path, "w", newline="", encoding="utf-8") as f_ch:
-            w_ch = csv.writer(f_ch, delimiter="\t")
-            w_ch.writerow(["name", "type", "units", "sampling_frequency", "status", "status_description"])
-            for i in range(1, total + 1):
-                if i <= n_eeg:
-                    row = [f"EEG{i:03d}", "EEG", "uV", eeg_fs, "good", "n/a"]
-                elif first_emg <= i < first_emg + n_emg:
-                    row = [f"EMG{i - first_emg + 1:02d}", "EMG", "uV", emg_fs, "good", "n/a"]
-                elif i == total:
-                    row = ["TRIG", "TRIG", "n/a", eeg_fs, "good", "n/a"]
-                else:
-                    row = [f"UNUSED{i:03d}", "MISC", "n/a", eeg_fs, "n/a", "not recorded / unplugged"]
-                w_ch.writerow(row)
-
-    # Minimal electrodes.tsv template
-    electrodes_path = os.path.join(sub_dir, "electrodes.tsv")
-    if not os.path.exists(electrodes_path):
-        with open(electrodes_path, "w", newline="", encoding="utf-8") as f_el:
-            w_el = csv.writer(f_el, delimiter="\t")
-            w_el.writerow(["name", "x", "y", "z", "type", "material"])
-            # You can add rows here manually if you have 3D coordinates.
-
-    # Minimal coordsystem.json (BIDS-style)
-    coordsystem_path = os.path.join(sub_dir, "coordsystem.json")
-    if not os.path.exists(coordsystem_path):
-        coords_meta = {
-            "EEGCoordinateSystem": "unknown",
-            "EEGCoordinateUnits": "mm",
-            "EEGCoordinateSystemDescription": "Coordinate system not specified. Update with your system (e.g., 'Cap layout in subject space')."
-        }
-        with open(coordsystem_path, "w", encoding="utf-8") as f_cs:
-            json.dump(coords_meta, f_cs, indent=4)
+    print(
+        f"\nRun summary saved: {log_path}\n"
+        f"BIDS events saved in: {sub_dir}\n"
+        f"Remember to save EDF as: {edf_name}\n"
+    )
+    core.wait(3.0)
+    win.close()
+    core.quit()
 
     # brief on-screen confirmation
     print(

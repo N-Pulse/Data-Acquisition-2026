@@ -1,5 +1,5 @@
 {
-    "SessionSeed": 4260809754,
+    "SessionSeed": 12074946,
     "SeedGenerator": "secrets.randbits(32) or user-provided",
     "ShuffleMethod": "random.Random(seed).shuffle(blocks), blocks = [(arm, movement_key) for arm in arms for movement_key in movements]",
     "Order": "Random",
@@ -7,19 +7,19 @@
         "Left"
     ],
     "MovementsSelected": [
-        "2_side_close_onlythumb_palm_3sec"
+        "2_side_close_onlythumb_3sec"
     ],
     "BaselineCode": 2,
     "BlockOrder": [
         {
             "block": 1,
             "arm": "Left",
-            "movement_key": "2_side_close_onlythumb_palm_3sec"
+            "movement_key": "2_side_close_onlythumb_3sec"
         }
     ],
     "RepsPerMovement": 1,
     "MovementsVersion": "fall2026",
     "PsychopyVersion": "2026.2.5",
     "PythonVersion": "3.12.16 | packaged by Anaconda, Inc. | (main, Oct 26 2026, 20:15:26) [Clang 20.1.8 ]",
-    "StartTime": "2026-11-26T16:04:48"
+    "StartTime": "2026-11-26T16:57:08"
 }

@@ -7,7 +7,7 @@
     "PowerLineFrequency": 50,
     "SoftwareFilters": "See acquisition system configuration.",
     "RecordingType": "continuous",
-    "RecordingDuration": 28.641465375199914,
+    "RecordingDuration": 23.573980374261737,
     "MovementsVersion": "fall2026",
     "EEGChannelCount": 128,
     "EMGChannelCount": 8,
@@ -16,8 +16,9 @@
     "TriggerChannelCount": 1,
     "HardwareTriggers": "Arduino via Trigger class; codes stored in arduino_trigger column of events.tsv.",
     "LSLMarkers": "stimulus_stream, integer channel named 'Markers'.",
-    "SessionSeed": 4260809754,
+    "SessionSeed": 12074946,
     "BlockOrder": [
-        "Left:2_side_close_onlythumb_palm_3sec"
-    ]
+        "Left:2_side_close_onlythumb_3sec"
+    ],
+    "RunCompleted": true
 }
