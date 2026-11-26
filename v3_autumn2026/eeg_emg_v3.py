@@ -60,9 +60,9 @@ def make_marker(phase_code: int, arm_code: int, base_code: int, move_code: int) 
     LSL marker code:
       marker = phase*10000 + arm*1000 + base*100 + move
 
-    - phase_code: PHASE[...] (1–5)
+    - phase_code: PHASE[...] (1/3/5/7/9)
     - arm_code:   ARM_CODES[...] (1/2)
-    - base_code:  baseline_code (1/2/3)
+    - base_code:  baseline_code (1/2/3/4/5/6)
     - move_code:  MOVEMENTS[mkey]["code"]
     """
     return phase_code * 10000 + arm_code * 1000 + base_code * 100 + move_code
